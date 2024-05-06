@@ -1,0 +1,179 @@
+/*Layout Styles*/
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 5px;
+}
+
+.btn {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.8125rem 1rem;
+  border-radius: 0.3125rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  background: rgb(104, 121, 235);
+  color: white;
+  border: none;
+  display: flex;
+  line-height: 22px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.btn:hover {
+  background-color: rgb(81, 101, 232);
+}
+
+.btn-add-svg{
+  width: 20px;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.btn-close {
+  font-size: 0.875rem;
+  font-weight: 500;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  position: fixed;
+  top: -0px;
+  right: -0px;
+  border: none;
+}
+
+.btn-close-svg{
+  width: 26px;
+}
+
+.btn-close-svg:hover{
+  color: red;
+}
+
+.asset-selector img {
+  width: 100%;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.sr-only {
+  position: absolute !important;
+  clip: rect(1px, 1px, 1px, 1px);
+  padding: 0 !important;
+  border: 0 !important;
+  height: 1px !important;
+  width: 1px !important;
+  overflow: hidden;
+}
+
+.hidden {
+  display: none;
+}
+
+.thumb-wrapper {
+  width: 100%;
+  border: 1px solid lightgray;
+  margin-top: 5px;
+  border-radius: 5px;
+  background: white;
+  position: relative;
+  display: flex;
+  padding: 5px;
+}
+
+.thumb-wrapper span {
+  font-weight: 500;
+  margin-left: 10px;
+  color: rgb(55, 65, 75);
+  font-size: 12px;
+  display: block;
+}
+
+.thumbnail {
+  width: 50px;
+  height: 50px;
+  padding: 1px;
+  border: 0.5px solid lightblue;
+  border-radius: 5px;
+}
+
+.thumbnail img{
+  border-radius: 5px;
+}
+
+.btn-remove{
+  position: absolute;
+  bottom: 0;
+  border: none;
+  background: none;
+  right: -1px;
+}
+
+.image-container {
+  display: flex;
+  flex-wrap: wrap;
+  max-height: 250px;
+  overflow-y: scroll;
+}
+
+.btn-remove-svg{
+  color: black;
+  width: 15px;
+}
+
+.btn-remove-svg:hover{
+  color: red;
+  cursor: pointer;
+}
+
+.thumbnail img{
+  width: 50px;
+}
+
+.asset-viewer {
+  color: gray;
+  width: 50px;
+  position: absolute;
+  top: 7px;
+  left: 8px;
+}
+
+.notimage span {
+  position: absolute;
+  top: 25px;
+  left: 13px;
+  font-size: 10px;
+}
+
+.missConfig span {
+  border: 1px solid #d9d6d6;
+  display: block;
+  padding: 9px;
+  background: white;
+  border-radius: 5px;
+  color: #4d4e4e;
+}
+
+.remove-all p {
+  color: red;
+  text-align: right;
+  font-size: 12px;
+  border:none;
+  background: none;
+  width: 100%;
+}
+.remove-all p:hover {
+  cursor: pointer;
+  color: black;
+}
+
