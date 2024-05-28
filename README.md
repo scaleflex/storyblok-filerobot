@@ -40,7 +40,7 @@ yarn dev
   {
     "uuid": "2a9de85c-406a-5101-9ab5-7b6259250001",
     "name": "$R202RV2-AiiacoEg.jpg",
-    "cdn": "https://try.filerobot.com/Widget_demo_folder/%24R202RV2-AiiacoEg.jpg?vh=c01224",
+    "cdn": "https://try.filerobot.com/Widget_demo_folder/%24R202RV2-AiiacoEg.jpg",
     "extension": "jpg",
     "source": "filerobot",
     "type": "image/jpeg"
@@ -48,7 +48,7 @@ yarn dev
   {
     "uuid": "c83ca796-00e5-5c08-b87c-cd6ecee50000",
     "name": "012871.tif",
-    "cdn": "https://try.filerobot.com/Widget_demo_folder/012871.tif?vh=2ddaba",
+    "cdn": "https://try.filerobot.com/Widget_demo_folder/012871.tif",
     "extension": "tif",
     "source": "filerobot",
     "type": "image/tiff"

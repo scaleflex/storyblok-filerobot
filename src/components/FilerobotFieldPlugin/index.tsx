@@ -42,12 +42,26 @@ const FieldPlugin: FunctionComponent = () => {
     actions.setModalOpen(false)
   }
 
+  const hasQueryString = (url: string) => {
+    try {
+      const urlObject = new URL(url);
+      return urlObject.search.length > 0;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  const createThumbnail = (url: string) => {
+    if (!hasQueryString(url)) return url + '?width=50&height=50'
+    else return url + '&width=50&height=50'
+  } 
+
   const fileTypePresent = (asset: { name: string, uuid: string, cdn: string, type: string, source: string, extension: string }, key: number) => {
     if(asset.type.includes('image')) {
       return (
         <div className="thumb-wrapper">
           <div className="thumbnail"  key={key}>
-            <img src={asset.cdn + '&width=50&height=50'} alt={asset.uuid} />
+            <img src={createThumbnail(asset.cdn)} alt={asset.uuid} />
             <button
               type="button"
               className="btn-remove"
@@ -112,14 +126,35 @@ const FieldPlugin: FunctionComponent = () => {
     return false
   }
 
+  const removeURLParameter = (url: string, parameter: string) => {
+    //prefer to use l.search if you have a location/link object
+    var urlparts = url.split('?');   
+    if (urlparts.length >= 2) {
+
+        var prefix = encodeURIComponent(parameter) + '=';
+        var pars = urlparts[1].split(/[&;]/g);
+
+        //reverse iteration as may be destructive
+        for (var i = pars.length; i-- > 0;) {    
+            //idiom for string.startsWith
+            if (pars[i].lastIndexOf(prefix, 0) !== -1) {  
+                pars.splice(i, 1);
+            }
+        }
+
+        return urlparts[0] + (pars.length > 0 ? '?' + pars.join('&') : '');
+    }
+    return url;
+  }
+
 
   const onSelectedFiles = (selectedFiles: never[]) => {
     const tempFiles: never[] = []
-    selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string } }) => {
+    selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string }, link: string }) => {
       const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string } = {
         uuid: file?.file?.uuid,
         name: file?.file?.name,
-        cdn: file?.file?.url?.cdn,
+        cdn: removeURLParameter(file?.link, 'vh'),
         extension: file?.file?.extension,
         source: 'filerobot',
         type: file?.file?.type,
