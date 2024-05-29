@@ -48,6 +48,7 @@ const FilerobotWidget: FunctionComponent<{
             mutualizedDownloadButton: 'Insert',
           },
         },
+        hideDownloadTransformationOption: true,
       })
       .use(XHRUpload)
       .on('export', function(

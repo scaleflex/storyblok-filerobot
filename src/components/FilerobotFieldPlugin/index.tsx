@@ -12,11 +12,13 @@ const FieldPlugin: FunctionComponent = () => {
   const [options, setOptions] = useState<{
     token: string,
     secTemplate: string,
-    rootDir: string
+    rootDir: string,
+    limit: string
   }>({
     token: '',
     secTemplate: '',
-    rootDir: '/'
+    rootDir: '/',
+    limit: '-1'
   })
 
   useEffect(() => {
@@ -31,6 +33,7 @@ const FieldPlugin: FunctionComponent = () => {
           token: data?.options.token,
           secTemplate: data?.options.secTemplate,
           rootDir: data?.options.rootDir,
+          limit: data?.options.limit,
         })
       }
     }
@@ -147,9 +150,15 @@ const FieldPlugin: FunctionComponent = () => {
     return url;
   }
 
+  const limitFiles = () => {
+    if ('limit' in options) return Number(options?.limit)
+    return -1
+  }
+
 
   const onSelectedFiles = (selectedFiles: never[]) => {
     const tempFiles: never[] = []
+    if (limitFiles() > 0) selectedFiles = selectedFiles.slice(0, limitFiles());    
     selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string }, link: string }) => {
       const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string } = {
         uuid: file?.file?.uuid,
@@ -199,6 +208,7 @@ const FieldPlugin: FunctionComponent = () => {
       { isValid && (
         <div>
           <div>
+            
             {!data?.isModalOpen && Array.isArray(files) && files.length > 0 && (
               <div className="remove-all">
                 <p onClick={() => {
@@ -215,6 +225,10 @@ const FieldPlugin: FunctionComponent = () => {
                   fileTypePresent(file, key)
                 ))}
               </div>
+            )}
+            {
+              limitFiles() > 0 && (
+                <div style={{ marginTop: 10}}><span><strong>Limit: </strong> {options?.limit}</span> </div>
             )}
             <div className={data?.isModalOpen ? 'container' : 'container hidden'}>
               <FilerobotWidget
@@ -248,10 +262,20 @@ const FieldPlugin: FunctionComponent = () => {
       ) }
 
       { !isValid && (
-        <div className={"missConfig"}>
-          <span>Please add 3 required options: <strong>token, secTemplate, rootDir</strong> from Filerobot</span>
+        <div>
+          <div className={"missConfig"}>
+            <span>Please add 3 required options: <strong>token, secTemplate, rootDir</strong> from Filerobot <br/> 
+            and <strong>limit</strong> is optional
+            </span> 
+          </div>
+          <div>
+            <span></span> 
+          </div>
         </div>
       )}
+
+      
+     
     </div>
   )
 }
