@@ -13,12 +13,14 @@ const FieldPlugin: FunctionComponent = () => {
     token: string,
     secTemplate: string,
     rootDir: string,
-    limit: string,
+    limit: number,
+    attributes: string,
   }>({
     token: '',
     secTemplate: '',
     rootDir: '/',
-    limit: '-1'
+    limit: -1,
+    attributes: ''
   })
 
   useEffect(() => {
@@ -33,7 +35,8 @@ const FieldPlugin: FunctionComponent = () => {
           token: data?.options.token,
           secTemplate: data?.options.secTemplate,
           rootDir: data?.options.rootDir,
-          limit: data?.options.limit,
+          limit: Number(data?.options.limit),
+          attributes: data?.options.attributes
         })
       }
     }
@@ -155,18 +158,34 @@ const FieldPlugin: FunctionComponent = () => {
     return -1
   }
 
+  const getAttributesData = (file: any) => {
+    let r: { [key: string]: any } = {};
+    if ('attributes' in options) {
+      let arr = options.attributes.split(",");
+      for (let value of arr) {
+        r[value.trim()] = file[value.trim()]
+      }
+      return r
+    }
+  }
+
 
   const onSelectedFiles = (selectedFiles: never[]) => {
     const tempFiles: never[] = []
-    if (limitFiles() > 0) selectedFiles = selectedFiles.slice(0, limitFiles());    
-    selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string }, link: string }) => {
-      const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string } = {
+    if (limitFiles() > 0) selectedFiles = selectedFiles.slice(0, limitFiles());
+    console.log(selectedFiles);
+    selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string, meta: object, tags: object,  }, link: string }) => {
+      const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object } = {
         uuid: file?.file?.uuid,
         name: file?.file?.name,
         cdn: removeURLParameter(file?.link, 'vh'),
         extension: file?.file?.extension,
         source: 'filerobot',
         type: file?.file?.type,
+      }
+
+      if ('attributes' in options) {
+        tempFile.attributes = getAttributesData(file?.file)
       }
 
       if (!checkExist(tempFile)) {
@@ -265,7 +284,8 @@ const FieldPlugin: FunctionComponent = () => {
         <div>
           <div className={"missConfig"}>
             <span>Please add 3 required options: <strong>token, secTemplate, rootDir</strong> from Filerobot <br/> 
-            and <strong>limit</strong> is optional
+            <strong>limit</strong> is optional (ex: 3, 4)<br/> 
+            <strong>attributes</strong> is optional (ex: meta, tags)
             </span> 
           </div>
           <div>
