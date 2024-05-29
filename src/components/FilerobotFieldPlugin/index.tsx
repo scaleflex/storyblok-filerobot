@@ -13,7 +13,7 @@ const FieldPlugin: FunctionComponent = () => {
     token: string,
     secTemplate: string,
     rootDir: string,
-    limit: string
+    limit: string,
   }>({
     token: '',
     secTemplate: '',

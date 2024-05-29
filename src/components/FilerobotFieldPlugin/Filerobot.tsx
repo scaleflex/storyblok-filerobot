@@ -32,7 +32,7 @@ const FilerobotWidget: FunctionComponent<{
       .use(Explorer, {
         target: '#filerobot-widget',
         config: {
-          rootFolderPath: options.rootDir ?? '/'
+          rootFolderPath: options.rootDir ?? '/',
         },
         inline: true,
         width: '100%',
@@ -42,13 +42,13 @@ const FilerobotWidget: FunctionComponent<{
         preventDownloadDefaultBehavior: true,
         resetAfterClose: true,
         dismissUrlPathQueryUpdate: true,
+        hideDownloadTransformationOption: true,
         locale: {
           strings: {
             mutualizedExportButtonLabel: 'Insert',
             mutualizedDownloadButton: 'Insert',
           },
         },
-        hideDownloadTransformationOption: true,
       })
       .use(XHRUpload)
       .on('export', function(
