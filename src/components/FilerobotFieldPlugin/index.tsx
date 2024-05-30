@@ -154,7 +154,7 @@ const FieldPlugin: FunctionComponent = () => {
       )
     } else {
       return (
-        <Draggable key={key} draggableId={key} index={key}>
+        <Draggable key={asset.uuid} draggableId={asset.uuid} index={key}>
           {(provided) => (
           <div className="thumb-wrapper" ref={provided.innerRef}
           {...provided.draggableProps}
