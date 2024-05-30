@@ -37,12 +37,17 @@ const FilerobotWidget: FunctionComponent<{
         inline: true,
         width: '100%',
         height: '100%',
+        disableExportButton: false, // default: false, if the page name = filerobot-fmaw the value is true
+        hideExportButtonIcon: true,
+        preventExportDefaultBehavior: true,
         disableDownloadButton: false,
         hideDownloadButtonIcon: true,
         preventDownloadDefaultBehavior: true,
-        resetAfterClose: true,
-        dismissUrlPathQueryUpdate: true,
+        noImgOperationsAndDownload: true, // default: false, if the page name = filerobot-fmaw the value is true
         hideDownloadTransformationOption: true,
+        disableFileResolutionFallback: true,
+        showFoldersTree: false,
+        defaultFieldKeyOfBulkEditPanel: 'title',
         locale: {
           strings: {
             mutualizedExportButtonLabel: 'Insert',
