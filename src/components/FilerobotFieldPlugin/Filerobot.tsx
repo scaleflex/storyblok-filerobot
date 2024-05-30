@@ -2,6 +2,7 @@ import { FunctionComponent, useRef, useEffect } from 'react'
 import Filerobot from '@filerobot/core'
 import Explorer from '@filerobot/explorer'
 import XHRUpload from '@filerobot/xhr-upload'
+import { useFieldPlugin } from '@storyblok/field-plugin/react'
 
 import '@filerobot/core/dist/style.min.css'
 import '@filerobot/explorer/dist/style.min.css'
@@ -16,14 +17,15 @@ const FilerobotWidget: FunctionComponent<{
     rootDir: string
   }
 }> = ({ selectedFiles, closeModal, options }) => {
-  const filerobot = useRef(null)
+  const filerobot = useRef<any>(null)
+  const { data } = useFieldPlugin()
 
   useEffect(() => {
     const container = options.token
     const secTemplate = options.secTemplate
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    
+    if (data?.isModalOpen) {
+    
     filerobot.current = Filerobot({
       securityTemplateId: secTemplate,
       container: container,
@@ -34,9 +36,11 @@ const FilerobotWidget: FunctionComponent<{
         config: {
           rootFolderPath: options.rootDir ?? '/',
         },
+        
         inline: true,
         width: '100%',
         height: '100%',
+        resetAfterClose: true,
         disableExportButton: false, // default: false, if the page name = filerobot-fmaw the value is true
         hideExportButtonIcon: true,
         preventExportDefaultBehavior: true,
@@ -63,14 +67,8 @@ const FilerobotWidget: FunctionComponent<{
           files = []
           return false
       })
-
-
-    return () => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      filerobot.current.close()
     }
-  }, [])
+  }, [data?.isModalOpen])
 
 
   return (

@@ -250,14 +250,16 @@ const FieldPlugin: FunctionComponent = () => {
     }
   }
 
+  const makeIndexFiles = (index: number) => {
+    return index + files.length
+  } 
 
   const onSelectedFiles = (selectedFiles: never[]) => {
     const tempFiles: never[] = []
     if (limitFiles() > 0) selectedFiles = selectedFiles.slice(0, limitFiles());
-    console.log(selectedFiles);
-    selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string, meta: object, tags: object,  }, link: string }) => {
+    selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string, meta: object, tags: object,  }, link: string }, index: number) => {
       const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object } = {
-        uuid: file?.file?.uuid,
+        uuid: file?.file?.uuid + '_' + makeIndexFiles(index),
         name: file?.file?.name,
         cdn: removeURLParameter(file?.link, 'vh'),
         extension: file?.file?.extension,
