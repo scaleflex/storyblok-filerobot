@@ -256,7 +256,7 @@ const FieldPlugin: FunctionComponent = () => {
 
   const onSelectedFiles = (selectedFiles: never[]) => {
     const tempFiles: never[] = []
-    if (limitFiles() > 0) selectedFiles = selectedFiles.slice(0, limitFiles());
+  
     selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string, meta: object, tags: object,  }, link: string }, index: number) => {
       const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object } = {
         uuid: file?.file?.uuid + '_' + makeIndexFiles(index),
@@ -278,8 +278,8 @@ const FieldPlugin: FunctionComponent = () => {
       }
     })
 
-    const updatedFiles = [...files, ...tempFiles]
-
+    let updatedFiles = [...files, ...tempFiles]
+    if (limitFiles() > 0) updatedFiles = updatedFiles.slice(0, limitFiles());
     setFiles(updatedFiles)
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
