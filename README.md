@@ -25,33 +25,4 @@ yarn dev
 - If you have any issue with duplicated plugin name: Please change the package.json name attribute and redeploy again
 
 ## User guide
-- You have to get 3 config from the Filerobot hub: Security template, Token, Directory(That already assigned to the Security Template)
-- Enter your token in Field plugins before using it: token, secTemplate, rootDir in Field Configurations
-  ![config.png](img/config.png)
-- To Add Asset please click Add Assets
-  ![asset.png](img/asset.png)
-- To insert asset
-  ![add.png](img/add.png)
-- You can add more, remove one or remove all assets
-  ![add.png](img/others.png)
-- Content will be structured like bellow
-```json
-[
-  {
-    "uuid": "2a9de85c-406a-5101-9ab5-7b6259250001",
-    "name": "$R202RV2-AiiacoEg.jpg",
-    "cdn": "https://try.filerobot.com/Widget_demo_folder/%24R202RV2-AiiacoEg.jpg",
-    "extension": "jpg",
-    "source": "filerobot",
-    "type": "image/jpeg"
-  },
-  {
-    "uuid": "c83ca796-00e5-5c08-b87c-cd6ecee50000",
-    "name": "012871.tif",
-    "cdn": "https://try.filerobot.com/Widget_demo_folder/012871.tif",
-    "extension": "tif",
-    "source": "filerobot",
-    "type": "image/tiff"
-  }
-]
-```
+Document: https://docs.scaleflex.com/filerobot-documentation/headless-dam-and-api/plugins-and-connectors/plugins/storyblok
