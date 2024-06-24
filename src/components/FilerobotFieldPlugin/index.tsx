@@ -4,6 +4,7 @@ import FilerobotWidget from './Filerobot'
 import { FunctionComponent, useEffect, useState } from 'react'
 import { useFieldPlugin } from '@storyblok/field-plugin/react'
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { e } from 'vitest/dist/reporters-QGe8gs4b.js'
 
 const FieldPlugin: FunctionComponent = () => {
   const { type, data, actions } = useFieldPlugin()
@@ -48,9 +49,15 @@ const FieldPlugin: FunctionComponent = () => {
 
   useEffect(() => {
     if (type === 'loaded') {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      setFiles(data?.content || []);
+      if (typeof data?.content === 'string') {
+        actions?.setContent([]);
+        setFiles([]);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        setFiles(data?.content || []);
+      }
+        
 
       if (data?.options.token && data?.options.secTemplate && data?.options.rootDir) {
         setIsValid(true)
@@ -256,7 +263,7 @@ const FieldPlugin: FunctionComponent = () => {
 
   const onSelectedFiles = (selectedFiles: never[]) => {
     const tempFiles: never[] = []
-  
+
     selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string, meta: object, tags: object,  }, link: string }, index: number) => {
       const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object } = {
         uuid: file?.file?.uuid + '_' + makeIndexFiles(index),
