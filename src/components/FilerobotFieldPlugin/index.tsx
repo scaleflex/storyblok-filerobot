@@ -11,6 +11,7 @@ const FieldPlugin: FunctionComponent = () => {
 
   const [files, setFiles] = useState<never[]>([])
   const [isValid, setIsValid] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
   const [options, setOptions] = useState<{
     token: string,
     secTemplate: string,
@@ -274,7 +275,7 @@ const FieldPlugin: FunctionComponent = () => {
         type: file?.file?.type,
       }
 
-      if ('attributes' in options) {
+      if ('attributes' in options && options.attributes != undefined) {
         tempFile.attributes = getAttributesData(file?.file)
       }
 
@@ -307,6 +308,72 @@ const FieldPlugin: FunctionComponent = () => {
     // @ts-ignore
     actions?.setContent(tempFiles)
   }
+
+  const endpoint = 'https://api.filerobot.com/' + options.token + '/v5'
+
+  // Function to fetch data from an API
+  async function fetchfileData(uuid: string): Promise<any> {
+    const url = endpoint + '/files/' + uuid
+    const response = await fetch(url);
+
+    // Check if the request was successful
+    if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    // Parse the response data as JSON
+    const data: any = await response.json();
+    return data;
+  }
+
+  const refreshAssets = async () => {
+    // Use 'tempFiles' to collect the promises from 'fetchfileData' calls
+    setIsLoading(true)
+    const promises = files.map(async (file: any, index: number) => {
+      const uuid = file.uuid.split('_');
+      try {
+        const response = await fetchfileData(uuid[0]);
+        if (response.status !== 'success') {
+          throw new Error('Network response was not ok ' + response.statusText);
+        }
+  
+        const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object } = {
+          uuid: response?.file?.uuid + '_' + makeIndexFiles(index),
+          name: response?.file?.name,
+          cdn: removeURLParameter(response?.file?.url?.cdn, 'vh'),
+          extension: response?.file?.extension,
+          source: 'filerobot',
+          type: response?.file?.type,
+        };
+        console.log()
+        if ('attributes' in options && options.attributes != undefined) {
+          tempFile.attributes = getAttributesData(response?.file);
+        }
+  
+        if (!checkExist(tempFile)) {
+          return tempFile;
+        }
+      } catch (error) {
+        console.error('Error fetching file data:', error);
+      }
+    });
+  
+    // Await all promises and filter out undefined values
+    const results = await Promise.all(promises);
+    const tempFiles = results.filter(file => file !== undefined);
+   
+    let updatedFiles = [...tempFiles];
+    if (limitFiles() > 0) updatedFiles = updatedFiles.slice(0, limitFiles());
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    setFiles(updatedFiles);
+    
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    actions?.setContent(updatedFiles);
+    setIsLoading(false)
+  };
 
   if (type !== 'loaded') {
     return null
@@ -361,6 +428,8 @@ const FieldPlugin: FunctionComponent = () => {
               <ModalToggle
                 isModalOpen={data.isModalOpen}
                 setModalOpen={actions?.setModalOpen}
+                refreshAssets={refreshAssets}
+                isLoading={isLoading}
               />
             </div>
           </div>

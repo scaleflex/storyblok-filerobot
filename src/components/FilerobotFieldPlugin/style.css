@@ -176,3 +176,19 @@
   color: black;
 }
 
+.flex {
+  display: flex;
+  flex-wrap: wrap; /* Ensures the columns wrap in smaller viewports */
+  gap: 20px
+}
+.column {
+  flex: 1; /* This makes the columns take equal space */
+  padding: 10px;
+  box-sizing: border-box; /* Ensures padding doesn't affect the total width */
+}
+
+.disabled {
+  cursor: not-allowed;
+  pointer-events: all !important;
+}
+
