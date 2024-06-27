@@ -201,3 +201,11 @@
   margin-left: 0.5rem;
 }
 
+.file-name {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 25rem;
+  height: 1.2em;
+  white-space: nowrap;
+}
+

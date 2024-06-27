@@ -152,7 +152,7 @@ const FieldPlugin: FunctionComponent = () => {
               </span>
             </div>
             <div className="content-wrapper">
-            <span>Filename: { asset.name }</span>
+            <span className="file-name">Filename: { asset.name }</span>
             <span>Type: { asset.type }</span>
             <span>Source: { asset.source }</span>
             </div>
@@ -200,7 +200,7 @@ const FieldPlugin: FunctionComponent = () => {
               </div>
             </div>
             <div className="content-wrapper">
-              <span>Filename: { asset.name }</span>
+              <span className="file-name">Filename: { asset.name }</span>
               <span>Type: { asset.type }</span>
               <span>Source: { asset.source }</span>
             </div>
