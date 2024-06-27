@@ -338,7 +338,7 @@ const FieldPlugin: FunctionComponent = () => {
         }
   
         const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object } = {
-          uuid: response?.file?.uuid + '_' + makeIndexFiles(index),
+          uuid: response?.file?.uuid + '_' + index,
           name: response?.file?.name,
           cdn: removeURLParameter(response?.file?.url?.cdn, 'vh'),
           extension: response?.file?.extension,
