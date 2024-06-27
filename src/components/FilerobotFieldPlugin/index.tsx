@@ -11,6 +11,7 @@ const FieldPlugin: FunctionComponent = () => {
 
   const [files, setFiles] = useState<never[]>([])
   const [isValid, setIsValid] = useState<boolean>(false)
+  const [isOverLimit, setIsOverLimit] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [options, setOptions] = useState<{
     token: string,
@@ -59,7 +60,6 @@ const FieldPlugin: FunctionComponent = () => {
         setFiles(data?.content || []);
       }
         
-
       if (data?.options.token && data?.options.secTemplate && data?.options.rootDir) {
         setIsValid(true)
         setOptions({
@@ -262,6 +262,11 @@ const FieldPlugin: FunctionComponent = () => {
     return index + files.length
   } 
 
+  const checkLimit = (updatedFiles: any) => {
+    if (limitFiles() > 0 && updatedFiles.length > limitFiles()) setIsOverLimit(true)
+      else setIsOverLimit(false)
+  }
+
   const onSelectedFiles = (selectedFiles: never[]) => {
     const tempFiles: never[] = []
 
@@ -287,7 +292,10 @@ const FieldPlugin: FunctionComponent = () => {
     })
 
     let updatedFiles = [...files, ...tempFiles]
-    if (limitFiles() > 0) updatedFiles = updatedFiles.slice(0, limitFiles());
+
+    checkLimit(updatedFiles)
+  
+    if (limitFiles() > 0) updatedFiles = updatedFiles.slice(0, limitFiles())
     setFiles(updatedFiles)
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -363,6 +371,9 @@ const FieldPlugin: FunctionComponent = () => {
     const tempFiles = results.filter(file => file !== undefined);
    
     let updatedFiles = [...tempFiles];
+
+    checkLimit(updatedFiles);
+
     if (limitFiles() > 0) updatedFiles = updatedFiles.slice(0, limitFiles());
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -379,6 +390,12 @@ const FieldPlugin: FunctionComponent = () => {
     return null
   }
 
+  const removeAllAssets = () => {
+    setFiles([])
+    actions?.setContent([])
+    setIsOverLimit(false)
+  }
+
   return (
     <div>
       { isValid && (
@@ -387,10 +404,7 @@ const FieldPlugin: FunctionComponent = () => {
             
             {!data?.isModalOpen && Array.isArray(files) && files.length > 0 && (
               <div className="remove-all">
-                <p onClick={() => {
-                  setFiles([])
-                  actions?.setContent([])
-                }}>
+                <p onClick={() => removeAllAssets()}>
                   Remove all assets
                 </p>
               </div>
@@ -415,8 +429,26 @@ const FieldPlugin: FunctionComponent = () => {
             )}
             {
               limitFiles() > 0 && (
-                <div style={{ marginTop: 10}}><span><strong>Limit: </strong> {options?.limit}</span> </div>
-            )}
+                <div className="flex" style={{ marginTop: 10}}>
+                  <div className="column"><strong>Limit: </strong> {options?.limit}</div> 
+                  {isOverLimit && !data?.isModalOpen && (
+                    <div className="column exceeds-the-limit">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="red" version="1.1"  width="12px" height="12px" viewBox="0 0 478.125 478.125">
+                        <g>
+                          <g>
+                            <g>
+                              <circle cx="239.904" cy="314.721" r="35.878"/>
+                              <path d="M256.657,127.525h-31.9c-10.557,0-19.125,8.645-19.125,19.125v101.975c0,10.48,8.645,19.125,19.125,19.125h31.9     c10.48,0,19.125-8.645,19.125-19.125V146.65C275.782,136.17,267.138,127.525,256.657,127.525z"/>
+                              <path d="M239.062,0C106.947,0,0,106.947,0,239.062s106.947,239.062,239.062,239.062c132.115,0,239.062-106.947,239.062-239.062     S371.178,0,239.062,0z M239.292,409.734c-94.171,0-170.595-76.348-170.595-170.596c0-94.248,76.347-170.595,170.595-170.595     s170.595,76.347,170.595,170.595C409.887,333.387,333.464,409.734,239.292,409.734z"/>
+                            </g>
+                          </g>
+                        </g>
+                      </svg>
+                      <span className="ml-1">Exceeds The Limit</span>
+                    </div> // Corrected the fragment to a valid HTML element
+                  )}
+                </div>
+             )}
             <div className={data?.isModalOpen ? 'container' : 'container hidden'}>
               <FilerobotWidget
                 selectedFiles={onSelectedFiles}
