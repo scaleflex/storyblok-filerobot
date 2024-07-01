@@ -204,8 +204,20 @@
 .file-name {
   text-overflow: ellipsis;
   overflow: hidden;
-  max-width: 25rem;
+  max-width: 65vw;
   height: 1.2em;
   white-space: nowrap;
 }
 
+.align-center {
+  text-align: center;
+}
+
+.align-right {
+  text-align: right;
+}
+
+.asset-content {
+  max-height: 350px;
+  overflow-y: scroll;
+}

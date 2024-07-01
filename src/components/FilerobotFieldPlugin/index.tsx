@@ -13,6 +13,7 @@ const FieldPlugin: FunctionComponent = () => {
   const [isValid, setIsValid] = useState<boolean>(false)
   const [isOverLimit, setIsOverLimit] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [showing, setShowing] = useState<number>(5)
   const [options, setOptions] = useState<{
     token: string,
     secTemplate: string,
@@ -260,7 +261,7 @@ const FieldPlugin: FunctionComponent = () => {
 
   const makeIndexFiles = (index: number) => {
     return index + files.length
-  } 
+  }
 
   const checkLimit = (updatedFiles: any) => {
     if (limitFiles() > 0 && updatedFiles.length > limitFiles()) setIsOverLimit(true)
@@ -396,6 +397,20 @@ const FieldPlugin: FunctionComponent = () => {
     setIsOverLimit(false)
   }
 
+  const getTotalAssets = () => {
+    if (files) return files.length
+    return 0;
+  }
+
+  const getShowing = () => {
+    if (showing > getTotalAssets()) return getTotalAssets()
+    else return showing
+  }
+
+  const showMore = () => {
+    setShowing(showing + 5)
+  }
+
   return (
     <div>
       { isValid && (
@@ -410,22 +425,24 @@ const FieldPlugin: FunctionComponent = () => {
               </div>
             )}
             {!data?.isModalOpen && (
-                <DragDropContext onDragEnd={onDragEnd}>
-                  <Droppable droppableId="droppable">
-                    {(provided) => (
-                      <div 
-                        {...provided.droppableProps} 
-                        ref={provided.innerRef}
-                        style={{ padding: '10px' }}
-                      >
-                        {Array.isArray(files) && files.map((file: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string }, key: number) => (
-                          fileTypePresent(file, key)
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>               
+                <div className="asset-content">
+                  <DragDropContext onDragEnd={onDragEnd}>
+                    <Droppable droppableId="droppable">
+                      {(provided) => (
+                        <div 
+                          {...provided.droppableProps} 
+                          ref={provided.innerRef}
+                          style={{ padding: '10px' }}
+                        >
+                          {Array.isArray(files) && files.map((file: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string }, key: number) => (
+                            fileTypePresent(file, key)
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>  
+                </div>             
             )}
             {
               limitFiles() > 0 && (
@@ -462,6 +479,9 @@ const FieldPlugin: FunctionComponent = () => {
                 setModalOpen={actions?.setModalOpen}
                 refreshAssets={refreshAssets}
                 isLoading={isLoading}
+                totalAssets={getTotalAssets()}
+                showing={getShowing()}
+                showMore={showMore}
               />
             </div>
           </div>
