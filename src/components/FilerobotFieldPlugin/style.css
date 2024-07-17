@@ -3,7 +3,6 @@
   max-width: 100%;
   margin: 0 auto;
   background-color: #ffffff;
-  padding: 30px;
   border-radius: 5px;
 }
 
@@ -110,6 +109,10 @@
   border-radius: 5px;
 }
 
+.text-small-size {
+  font-size: 12px;
+}
+
 .btn-remove{
   position: absolute;
   bottom: 0;
@@ -197,8 +200,17 @@
   color: red;
   text-align: right;
 }
+
+.red {
+  color: red;
+}
+
 .ml-1 {
   margin-left: 0.5rem;
+}
+
+.mt-1 {
+  margin-top: 0.5rem;
 }
 
 .file-name {
@@ -220,4 +232,67 @@
 .asset-content {
   max-height: 350px;
   overflow-y: scroll;
+}
+
+.show-meta-setting {
+  cursor: pointer;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.preview-icon {
+  position: absolute;
+  right: 28px;
+  top: 3px;
+}
+
+.popup {
+  background-color: rgb(255, 255, 255);
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  height: 95%;
+  z-index: 9;
+}
+
+.position-relative {
+  position: relative;
+  height: 100%;
+}
+
+.popup-content {
+  text-align: center;
+  position: absolute;
+  top: 50%;  
+  left: 50%; 
+  transform: translate(-50%, -50%);
+}
+
+.cls-1{fill:#ff4141;fill-rule:evenodd;}
+
+.close-popup {
+  width: 10px;
+  position: absolute;
+  right: 8px;
+  top: 3px;
+  z-index: 99;
+}
+
+.img-responsive {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.margin-auto {
+  margin: 0 auto;
+}
+
+.cKKkTr {
+  width: auto !important;
 }
