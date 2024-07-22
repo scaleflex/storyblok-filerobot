@@ -210,8 +210,8 @@ const FieldPlugin: FunctionComponent = () => {
   }
 
   const createThumbnail = (url: string) => {
-    if (!hasQueryString(url)) return url + '?width=50&height=50'
-    else return url + '&width=50&height=50'
+    if (!hasQueryString(url)) return url + '?width=55&height=55'
+    else return url + '&width=55&height=55'
   } 
 
   const createReviewImage = (url: string) => {
@@ -273,12 +273,9 @@ const FieldPlugin: FunctionComponent = () => {
               <div className="preview-icon cursor-pointer" onClick={() => {previewAsset(asset)}}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M15 12c0 1.654-1.346 3-3 3s-3-1.346-3-3 1.346-3 3-3 3 1.346 3 3zm9-.449s-4.252 8.449-11.985 8.449c-7.18 0-12.015-8.449-12.015-8.449s4.446-7.551 12.015-7.551c7.694 0 11.985 7.551 11.985 7.551zm-7 .449c0-2.757-2.243-5-5-5s-5 2.243-5 5 2.243 5 5 5 5-2.243 5-5z"/></svg>
               </div>
-              <span 
+              <span
+                className="drag-handle-icon"
                 {...provided.dragHandleProps} 
-                style={{ position: 'absolute',
-                  cursor: 'grab',
-                  right: '1px',
-                  top: '2px' }}
               >
                 <DragHandleIcon />
               </span>
@@ -325,11 +322,8 @@ const FieldPlugin: FunctionComponent = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M15 12c0 1.654-1.346 3-3 3s-3-1.346-3-3 1.346-3 3-3 3 1.346 3 3zm9-.449s-4.252 8.449-11.985 8.449c-7.18 0-12.015-8.449-12.015-8.449s4.446-7.551 12.015-7.551c7.694 0 11.985 7.551 11.985 7.551zm-7 .449c0-2.757-2.243-5-5-5s-5 2.243-5 5 2.243 5 5 5 5-2.243 5-5z"/></svg>
               </div>)}
               <div 
+                className="drag-handle-icon"
                 {...provided.dragHandleProps} 
-                style={{ position: 'absolute',
-                  cursor: 'grab',
-                  right: '1px',
-                  top: '2px' }}
               >
                 <DragHandleIcon />
               </div>
@@ -503,6 +497,7 @@ const FieldPlugin: FunctionComponent = () => {
 
   const onSelectedFiles = (selectedFiles: never[]) => {
     const tempFiles: never[] = []
+    console.log(selectedFiles)
 
     selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string, meta: object, tags: object,  }, link: string }, index: number) => {
       const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object } = {
@@ -663,9 +658,9 @@ const FieldPlugin: FunctionComponent = () => {
           <div>
             {!data?.isModalOpen && Array.isArray(files) && files.length > 0 && (
               <div className="remove-all">
-                <p onClick={() => removeAllAssets()}>
+                <span onClick={() => removeAllAssets()}>
                   Remove all assets
-                </p>
+                </span>
               </div>
             )}
             {!data?.isModalOpen && (
