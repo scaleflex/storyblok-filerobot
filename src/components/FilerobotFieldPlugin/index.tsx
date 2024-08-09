@@ -215,7 +215,7 @@ const FieldPlugin: FunctionComponent = () => {
   } 
 
   const createReviewImage = (url: string) => {
-    if (!hasQueryString(url)) return url + '?width=350'
+    if (!hasQueryString(url)) return url + '?width=350&'
     else return url + '&width=350'
   } 
 
@@ -248,7 +248,7 @@ const FieldPlugin: FunctionComponent = () => {
     setPopupShow(true)
   }
   
-  const fileTypePresent = (asset: { name: string, uuid: string, cdn: string, type: string, source: string, extension: string }, key: number) => {
+  const fileTypePresent = (asset: { name: string, uuid: string, cdn: string, type: string, source: string, extension: string, ownerName: string }, key: number) => {
     if(asset.type.includes('image')) {
       return (
         <Draggable key={asset.uuid} draggableId={asset.uuid} index={key}>
@@ -281,9 +281,9 @@ const FieldPlugin: FunctionComponent = () => {
               </span>
             </div>
             <div className="content-wrapper">
-            <span className="file-name">Filename: { asset.name }</span>
-            <span className="file-name">Type: { asset.type }</span>
-            <span>Source: { asset.source }</span>
+              <span className="file-name">Filename: { asset.name }</span>
+              <span className="file-name">Type: { asset.type }</span>
+              <span>Owner: { asset.ownerName }</span>
             </div>
           </div>
           )}
@@ -331,7 +331,7 @@ const FieldPlugin: FunctionComponent = () => {
             <div className="content-wrapper">
               <span className="file-name">Filename: { asset.name }</span>
               <span className="file-name">Type: { asset.type }</span>
-              <span>Source: { asset.source }</span>
+              <span>Owner: { asset.ownerName }</span>
             </div>
           </div>
           )}
@@ -428,16 +428,17 @@ const FieldPlugin: FunctionComponent = () => {
       let arr = options.attributes.split(",");
       for (let value of arr) {
         let valueTrim = value.trim();
-        if (valueTrim == 'meta') {
-            let rMeta: any = {}
-            metaCurrent.forEach(meta => {
-              let metaTrim = meta.trim();
-              rMeta[metaTrim] = file[valueTrim][metaTrim]
-            })
-            r[valueTrim] = rMeta
-        }else {
-          r[valueTrim] = file[valueTrim]
-        }
+        // if (valueTrim == 'meta') {
+        //     let rMeta: any = {}
+        //     metaCurrent.forEach(meta => {
+        //       let metaTrim = meta.trim();
+        //       rMeta[metaTrim] = file[valueTrim][metaTrim]
+        //     })
+        //     r[valueTrim] = rMeta
+        // }else {
+        //   r[valueTrim] = file[valueTrim]
+        // }
+        r[valueTrim] = file[valueTrim]
       }
       return r
     }
@@ -497,16 +498,15 @@ const FieldPlugin: FunctionComponent = () => {
 
   const onSelectedFiles = (selectedFiles: never[]) => {
     const tempFiles: never[] = []
-    console.log(selectedFiles)
-
-    selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string, meta: object, tags: object,  }, link: string }, index: number) => {
-      const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object } = {
+    selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string, meta: object, tags: object, owner: any }, link: string }, index: number) => {
+      const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object, ownerName: string } = {
         uuid: file?.file?.uuid + '_' + makeIndexFiles(index),
         name: file?.file?.name,
         cdn: removeURLParameter(file?.link, 'vh'),
         extension: file?.file?.extension,
         source: 'filerobot',
         type: file?.file?.type,
+        ownerName:  'owner' in file?.file && file?.file?.owner ? file?.file?.owner?.name : ''
       }
 
       if ('attributes' in options && options.attributes != undefined) {
@@ -564,13 +564,14 @@ const FieldPlugin: FunctionComponent = () => {
           throw new Error('Network response was not ok ' + response.statusText);
         }
   
-        const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object } = {
+        const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object, ownerName: string} = {
           uuid: response?.file?.uuid + '_' + index,
           name: response?.file?.name,
           cdn: removeURLParameter(response?.file?.url?.cdn, 'vh'),
           extension: response?.file?.extension,
           source: 'filerobot',
           type: response?.file?.type,
+          ownerName: response?.file?.owner?.name,
         };
 
         if ('attributes' in options && options.attributes != undefined) {
@@ -673,7 +674,8 @@ const FieldPlugin: FunctionComponent = () => {
                           ref={provided.innerRef}
                           style={{ padding: '10px' }}
                         >
-                          {Array.isArray(files) && files.map((file: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string }, key: number) => (
+                          {Array.isArray(files) && files.map((file: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, ownerName: string }, key: number) => (
+                           
                             fileTypePresent(file, key)
                           ))}
                           {provided.placeholder}
@@ -753,14 +755,28 @@ const FieldPlugin: FunctionComponent = () => {
       { !isValid && (
         <div>
           <div className={"missConfig"}>
-            <span>Please add 3 required options: <strong>token, secTemplate, rootDir</strong> from Filerobot <br/></span> 
-            <span><strong>limit</strong> is optional (limit for all files type ex: 3)<br/> </span> 
-            <span><strong>attributes</strong> is optional (ex: meta, tags)<br/> </span> 
-            {/* <span><strong>limitImage</strong> is optional (ex: 4)<br/> </span> 
-            <span><strong>limitVideoAndAudio</strong> is optional (ex: 5)<br/> </span> 
-            <span><strong>limitDocument</strong> is optional (ex: 6)</span>  */}
-            <span><strong>limitType</strong> is optional (ex: image, document, video, audio)<br/> </span>
-            <span><strong>metaData</strong> is optional (value depends on the your token)<br/> </span>
+            <div>Please add 3 required options: <strong>token, secTemplate, rootDir</strong> from Filerobot <br/></div> 
+            <div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+              </svg>
+              <strong>limit</strong> is optional (limit for all files type ex: 3)</div> 
+            <div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+              </svg>
+              <strong>attributes</strong> is optional (ex: meta, tags)
+            </div> 
+            <div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+              </svg>
+              <strong>limitType</strong> is optional (ex: image, document, video, audio) </div>
+            <div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+              </svg>
+              <strong>metaData</strong> is optional (value depends on the your token)</div>
           </div>
         </div>
       )}

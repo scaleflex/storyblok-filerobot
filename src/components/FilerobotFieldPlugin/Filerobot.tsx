@@ -56,7 +56,7 @@ const FilerobotWidget: FunctionComponent<{
         noImgOperationsAndDownload: true, // default: false, if the page name = filerobot-fmaw the value is true
         hideDownloadTransformationOption: true,
         disableFileResolutionFallback: true,
-        // showFoldersTree: true,
+        showFoldersTree: false,
         // showProductsTree: true,
         // showCollectionsTree: true,
         // showLabelsTree: true,
