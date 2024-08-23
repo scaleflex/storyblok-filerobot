@@ -15,7 +15,7 @@ const FieldPlugin: FunctionComponent = () => {
   const [isValid, setIsValid] = useState<boolean>(false)
   const [isOverLimit, setIsOverLimit] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [apiIsLoading, setApiIsLoading] = useState<boolean>(false)
+  const [apiIsLoading, setApiIsLoading] = useState<boolean>(true)
   const [isCanMetaData, setIsCanMetaData] = useState<boolean>(true)
   const [endpoint, setEndpoint] = useState<string>('')
   const [sassKey, setSassKey] = useState<string>('')
@@ -108,6 +108,7 @@ const FieldPlugin: FunctionComponent = () => {
   }
 
   async function fetchMetaData(xFilerobotKey: string): Promise<any> {
+    setApiIsLoading(true)
     const url = `${endpoint}/meta/model/fields`;
     const response = await fetch(url, {
         method: 'GET',
@@ -117,7 +118,7 @@ const FieldPlugin: FunctionComponent = () => {
             'Content-Type': 'application/json'
         }
     });
-
+    setApiIsLoading(false)
     if (!response.ok) {
         const responseText = await response.text();
         throw new Error(`HTTP error! Status: ${response.status}, Response: ${responseText}`);
@@ -718,7 +719,7 @@ const FieldPlugin: FunctionComponent = () => {
   return (
     <div>
       { showFilePreview() }
-      { isValid && (
+      { (isValid && !apiIsLoading) && (
         <div>
           <div>
             {!data?.isModalOpen && Array.isArray(files) && files.length > 0 && (
@@ -845,31 +846,6 @@ const FieldPlugin: FunctionComponent = () => {
           </div>
         </div>
       )}
-      {/* {isValid && !data.isModalOpen && (
-      <div className='mt-1 show-meta-setting' onClick={() => {
-                  setshowMetaDataSetting(!showMetaDataSetting)
-                }}>Show list metaData
-      </div>
-      )}
-      {isCanMetaData ? (
-        <>
-        {metaData && metaData.length > 0 && !data.isModalOpen && showMetaDataSetting && (
-          <div className='mt-1'>
-            <strong>metaData</strong> is optional ( working when <strong>'attributes'</strong> filed have vaule <strong>'meta' </strong><br/> ex:&nbsp;
-            {metaData.map((meta, i, arr) => (
-              <span key={meta.sys_key}>{arr.length - 1 === i ? meta.api_slug + ' ' : meta.api_slug + ', '}</span>
-            ))}
-            )
-          </div>
-        )}</>) : (
-       <>
-       {showMetaDataSetting && (
-        <div className='mt-1'>
-          Your token don't have the permission to get meta data
-        </div>
-       )}
-       </>
-      )} */}
     </div>
   )
 }
