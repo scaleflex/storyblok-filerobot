@@ -15,8 +15,11 @@ const FieldPlugin: FunctionComponent = () => {
   const [isValid, setIsValid] = useState<boolean>(false)
   const [isOverLimit, setIsOverLimit] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [apiIsLoading, setApiIsLoading] = useState<boolean>(false)
   const [isCanMetaData, setIsCanMetaData] = useState<boolean>(true)
   const [endpoint, setEndpoint] = useState<string>('')
+  const [sassKey, setSassKey] = useState<string>('')
+  const [metaDataOption, setMetaDataOption] = useState<any[]>([])
   const [currentFile, setCurrentFile] = useState<any>({})
   const [popupShow, setPopupShow] = useState<boolean>(false)
   const wrapperRef = useRef<any>(null);
@@ -130,11 +133,38 @@ const FieldPlugin: FunctionComponent = () => {
     }
   }
 
+  async function fetchMetaDataOption(xFilerobotKey: string, selectFieldUuid: string): Promise<any> {
+    const url = `${endpoint}/meta/model/fields/${selectFieldUuid}/options`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+            'X-Filerobot-Key': xFilerobotKey,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+      const responseText = await response.text();
+      throw new Error(`HTTP error! Status: ${response.status}, Response: ${responseText}`);
+    } else {
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+          const data = await response.json();
+          return data;
+      } else {
+          const responseText = await response.text();
+          throw new Error(`Expected JSON response, but got: ${responseText}`);
+      }
+    }
+  }
+
   async function getMetaData() {
     try {
         const sassKeyData = await fetchSassKey();
         if (sassKeyData.status == 'success') {
           const xFilerobotKey = sassKeyData.key; // Assuming the key is stored in 'key' property
+          setSassKey(xFilerobotKey)
           const metaData = await fetchMetaData(xFilerobotKey);
           if (metaData.status == 'success') setMetaData(metaData.fields)
       }
@@ -188,11 +218,29 @@ const FieldPlugin: FunctionComponent = () => {
     }
   }, [type, data?.content]);
 
-//   useEffect(() => {
-//     if (options.token && options.secTemplate && options.token != '' && options.secTemplate != '') {
-//       getMetaData()
-//     }
-//  }, [endpoint]);
+  // useEffect(() => {
+  //   if (options.token && options.secTemplate && options.token != '' && options.secTemplate != '') {
+  //     const fetchData = async () => {
+  //       try {
+  //         const results = await Promise.all(
+  //           metaData
+  //           .filter(meta => meta.type == 'multi-select' || meta.type == 'select-one')
+  //           .map(async (meta) => await fetchMetaDataOption(sassKey, meta.uuid))
+  //         )
+  //         setMetaDataOption(results)
+  //       } catch (error) {
+  //         console.error('Error fetching data:', error);
+  //       }
+  //     }
+  //     fetchData()
+  //   }
+  // }, [metaData]);
+
+  useEffect(() => {
+    if (options.token && options.secTemplate && options.token != '' && options.secTemplate != '') {
+      getMetaData()
+    }
+  }, [endpoint]);
 
   const closeModal = () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -418,27 +466,28 @@ const FieldPlugin: FunctionComponent = () => {
 
   const getAttributesData = (file: any) => {
     let r: { [key: string]: any } = {};
-    let metaCurrent = ['title', 'description']
-
-    if ('metaData' in options && options.metaData && options.metaData !='' && options.attributes != undefined && options.attributes != '') {
-      metaCurrent = metaCurrent.concat(options.metaData.split(","))
-    }
+    let metaCurrent = ['Title', 'Description']
+    // if ('metaData' in options && options.metaData && options.metaData !='' && options.attributes != undefined && options.attributes != '') {
+    //   metaCurrent = metaCurrent.concat(options.metaData.split(","))
+    // }
 
     if ('attributes' in options && options.attributes != undefined) {
       let arr = options.attributes.split(",");
       for (let value of arr) {
         let valueTrim = value.trim();
-        // if (valueTrim == 'meta') {
-        //     let rMeta: any = {}
-        //     metaCurrent.forEach(meta => {
-        //       let metaTrim = meta.trim();
-        //       rMeta[metaTrim] = file[valueTrim][metaTrim]
-        //     })
-        //     r[valueTrim] = rMeta
-        // }else {
-        //   r[valueTrim] = file[valueTrim]
-        // }
-        r[valueTrim] = file[valueTrim]
+        if (valueTrim == 'meta') {
+            let rMeta: any = {}
+            metaCurrent.forEach(meta => {
+              let metaTrim = meta.trim();
+              rMeta[metaTrim] = file[valueTrim][metaTrim.toLowerCase()]
+            })
+            metaData.forEach(meta => {
+              rMeta[meta.title] = file[valueTrim][meta.api_slug]
+            })
+            r[valueTrim] = rMeta
+        }else {
+          r[valueTrim] = file[valueTrim]
+        }
       }
       return r
     }
@@ -496,33 +545,48 @@ const FieldPlugin: FunctionComponent = () => {
     actions?.setContent(updatedFiles)
   }
 
-  const onSelectedFiles = (selectedFiles: never[]) => {
-    const tempFiles: never[] = []
-    selectedFiles.forEach((file: { file: { uuid: string, name: string, url: { cdn: string }, type: string, extension: string, meta: object, tags: object, owner: any }, link: string }, index: number) => {
-      const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object, ownerName: string } = {
-        uuid: file?.file?.uuid + '_' + makeIndexFiles(index),
-        name: file?.file?.name,
-        cdn: removeURLParameter(file?.link, 'vh'),
-        extension: file?.file?.extension,
-        source: 'filerobot',
-        type: file?.file?.type,
-        ownerName:  'owner' in file?.file && file?.file?.owner ? file?.file?.owner?.name : ''
-      }
+  const onSelectedFiles = async (selectedFiles: never[]) => {
+    // Use 'tempFiles' to collect the promises from 'fetchfileData' calls
+    setIsLoading(true)
+    const promises = selectedFiles.map(async (file: any, index: number) => {
+      const uuid = file.file.uuid;
+      try {
+        const response = await fetchfileData(uuid);
+        if (response.status !== 'success') {
+          throw new Error('Network response was not ok ' + response.statusText);
+        }
+  
+        const tempFile: { uuid: string, name: string, cdn: string, type: string, source: string, extension: string, attributes?: object, ownerName: string} = {
+          uuid: response?.file?.uuid + '_' + makeIndexFiles(index),
+          name: response?.file?.name,
+          cdn: removeURLParameter(response?.file?.url?.cdn, 'vh'),
+          extension: response?.file?.extension,
+          source: 'filerobot',
+          type: response?.file?.type,
+          ownerName: response?.file?.owner?.name,
+        };
 
-      if ('attributes' in options && options.attributes != undefined) {
-        tempFile.attributes = getAttributesData(file?.file)
+        if ('attributes' in options && options.attributes != undefined) {
+          tempFile.attributes = getAttributesData(response?.file);
+        }
+  
+        if (!checkExist(tempFile)) {
+          return tempFile;
+        }
+      } catch (error) {
+        console.error('Error fetching file data:', error);
       }
-
-      if (!checkExist(tempFile)) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        tempFiles.push(tempFile)
-      }
-    })
-
-    let updatedFiles = [...files, ...tempFiles]
+    });
+  
+    // Await all promises and filter out undefined values
+    const results = await Promise.all(promises);
+    const tempFiles = results.filter(file => file !== undefined);
+    
+    let updatedFiles = [...files, ...tempFiles];
 
     updatFiles(updatedFiles)
+
+    setIsLoading(false)
   }
 
   const removeAsset = (key: number) => {
@@ -540,7 +604,7 @@ const FieldPlugin: FunctionComponent = () => {
 
   // Function to fetch data from an API
   async function fetchfileData(uuid: string): Promise<any> {
-    const url = endpoint + '/files/' + uuid
+    const url = endpoint + '/files/' + uuid + '?format=select:human'
     const response = await fetch(url);
 
     // Check if the request was successful
@@ -772,11 +836,12 @@ const FieldPlugin: FunctionComponent = () => {
                 <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
               </svg>
               <strong>limitType</strong> is optional (ex: image, document, video, audio) </div>
-            <div>
+            {/* <div>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
               </svg>
-              <strong>metaData</strong> is optional (value depends on the your token)</div>
+              <strong>metaData</strong> is optional (value depends on the your token)
+            </div> */}
           </div>
         </div>
       )}
