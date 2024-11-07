@@ -219,6 +219,14 @@ const FieldPlugin: FunctionComponent = () => {
     }
   }, [type, data?.content]);
 
+
+  useEffect(() => {
+    setApiIsLoading(true)
+    if (type === 'loaded') {
+      setApiIsLoading(false)
+    }
+  }, [type]);
+
   // useEffect(() => {
   //   if (options.token && options.secTemplate && options.token != '' && options.secTemplate != '') {
   //     const fetchData = async () => {
@@ -237,11 +245,11 @@ const FieldPlugin: FunctionComponent = () => {
   //   }
   // }, [metaData]);
 
-  useEffect(() => {
-    if (options.token && options.secTemplate && options.token != '' && options.secTemplate != '') {
-      getMetaData()
-    }
-  }, [endpoint]);
+  // useEffect(() => {
+  //   if (options.token && options.secTemplate && options.token != '' && options.secTemplate != '') {
+  //     getMetaData()
+  //   }
+  // }, [endpoint]);
 
   const closeModal = () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -467,28 +475,27 @@ const FieldPlugin: FunctionComponent = () => {
 
   const getAttributesData = (file: any) => {
     let r: { [key: string]: any } = {};
-    let metaCurrent = ['Title', 'Description']
+    let metaCurrent = ['title', 'description']
     // if ('metaData' in options && options.metaData && options.metaData !='' && options.attributes != undefined && options.attributes != '') {
     //   metaCurrent = metaCurrent.concat(options.metaData.split(","))
     // }
-
     if ('attributes' in options && options.attributes != undefined) {
       let arr = options.attributes.split(",");
       for (let value of arr) {
         let valueTrim = value.trim();
-        if (valueTrim == 'meta') {
-            let rMeta: any = {}
-            metaCurrent.forEach(meta => {
-              let metaTrim = meta.trim();
-              rMeta[metaTrim] = file[valueTrim][metaTrim.toLowerCase()]
-            })
-            metaData.forEach(meta => {
-              rMeta[meta.title] = file[valueTrim][meta.api_slug]
-            })
-            r[valueTrim] = rMeta
-        }else {
+        // if (valueTrim == 'meta') {
+        //     let rMeta: any = {}
+        //     metaCurrent.forEach(meta => {
+        //       let metaTrim = meta.trim();
+        //       rMeta[metaTrim] = file[valueTrim][metaTrim]
+        //     })
+        //     metaData.forEach(meta => {
+        //       rMeta[meta.api_slug] = file[valueTrim][meta.api_slug]
+        //     })
+        //     r[valueTrim] = rMeta
+        // }else {
           r[valueTrim] = file[valueTrim]
-        }
+        //}
       }
       return r
     }
@@ -899,7 +906,7 @@ const FieldPlugin: FunctionComponent = () => {
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
               </svg>
-              <strong>attributes</strong> is optional (ex: meta, tags)
+              <strong>attributes</strong> is optional (ex: meta, tags, info)
             </div> 
             <div>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">

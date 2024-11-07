@@ -27,7 +27,7 @@ const FilerobotWidget: FunctionComponent<{
     let limitTypeArr: any = []
     if ('limitType' in options && options.limitType && options.limitType != '') {
       limitTypeArr = options.limitType.split(",").map(function(item) {
-        return item.trim().toUpperCase()
+        return item.trim();
       })
     }
     
@@ -68,6 +68,10 @@ const FilerobotWidget: FunctionComponent<{
             mutualizedDownloadButton: 'Insert',
           },
         },
+        // search: {
+        //   query: '01basic',
+        // }
+        
         filters: {
           mimeTypes: limitTypeArr,
         }
