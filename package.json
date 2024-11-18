@@ -12,7 +12,12 @@
   },
   "dependencies": {
     "@filerobot/core": "^3.42.3",
+    "@filerobot/dropbox": "^3.78.2",
     "@filerobot/explorer": "^3.42.3",
+    "@filerobot/google-drive": "^3.78.2",
+    "@filerobot/onedrive": "^3.78.2",
+    "@filerobot/progress-panel": "^3.78.2",
+    "@filerobot/url": "^3.78.2",
     "@filerobot/xhr-upload": "^3.42.3",
     "@storyblok/field-plugin": "1.1.2",
     "html-react-parser": "^5.1.10",
