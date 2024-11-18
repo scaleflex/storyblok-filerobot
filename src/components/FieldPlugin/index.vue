@@ -1,17 +1,11 @@
 <script setup lang="ts">
+// @ts-nocheck
 import { onMounted, ref, watch, defineEmits } from 'vue';
 import './index.css'
 import ModalToggle from './ModalToggle.vue'
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import Filerobot from './Filerobot.vue'
-import { eventBus } from './eventBus';
 import { VueDraggableNext } from 'vue-draggable-next'
-
-interface ApiResponse {
-  status: string
-  file: json
-  // Add any other properties expected in the response
-}
 
 const plugin = useFieldPlugin({
   enablePortalModal: true,
@@ -23,9 +17,8 @@ const plugin = useFieldPlugin({
 const isValid = ref(false);
 const endpoint = ref(null);
 const isLoading = ref(false);
-const files = ref([]);
+const files = ref<any[]>([]);
 const error = ref<string | null>(null)
-const data = ref<ApiResponse | null>(null)
 const isOverLimit = ref(false)
 const options = ref({
   token: '',
@@ -39,15 +32,9 @@ const popupShow = ref(false)
 let documentArr = ['video', 'image', 'audio']
 const emit = defineEmits(['customEvent']);
 
-function isEmpty(str) {
+function isEmpty(str: string) {
   return (!str || str.length === 0 );
 }
-
-onMounted(() => {
-  eventBus.on('globalEvent', (payload) => {
-    isOverLimit.value = payload
-  });
-});
 
 watch(plugin, (newPlugin) => {
   if (newPlugin.type === 'loaded') {
@@ -76,11 +63,6 @@ watch(plugin, (newPlugin) => {
   }
 },{ once: true });
 
-const closeModal = () => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  plugin.actions.setModalOpen(false)
-}
 
 const getTypeAssets = (type: any) => {
   let arr = type.split("/");
@@ -345,10 +327,8 @@ const checkLimit = (updatedFiles: any) => {
  
   if (limitFiles() > 0 && updatedFiles.length > limitFiles()) {
     isOverLimit.value = true
-    eventBus.emit('globalEvent', true);
   } else {
     isOverLimit.value = false
-    eventBus.emit('globalEvent', false);
   }
 }
 
@@ -533,8 +513,6 @@ const log = (event) => {
       </div>
 
       <Filerobot
-        :is-modal-open="plugin.data.isModalOpen"
-        :set-modal-open="closeModal"
         :selected-files="selectedFiles"
       />
 

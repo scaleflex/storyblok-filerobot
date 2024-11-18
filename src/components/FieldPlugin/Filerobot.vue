@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
-import type { SetModalOpen } from '@storyblok/field-plugin'
 
 import Filerobot from '@filerobot/core'
 import Explorer from '@filerobot/explorer'
@@ -9,10 +8,12 @@ import '@filerobot/core/dist/style.min.css'
 import '@filerobot/explorer/dist/style.min.css'
 import { ref, watch } from 'vue'
 
+interface SelectedFiles {
+  (files: any[]): void; // Adjust the type of 'files' based on its structure
+}
+
 const props = defineProps<{
-  isModalOpen: boolean
-  setModalOpen: SetModalOpen<number>
-  selectedFiles: (files) => void
+  selectedFiles: SelectedFiles
 }>()
 
 const plugin = useFieldPlugin({

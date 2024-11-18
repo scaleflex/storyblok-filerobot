@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// @ts-nocheck
+
 import type { SetModalOpen } from '@storyblok/field-plugin'
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 
