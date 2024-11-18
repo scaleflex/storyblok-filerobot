@@ -1,13 +1,14 @@
-import React from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App'
+import { createApp } from 'vue'
 import './style.css'
-import { createRootElement } from './createRootElement'
+import App from './App.vue'
 
-const rootNode = createRootElement()
-document.body.appendChild(rootNode)
-
-createRoot(rootNode).render(<App />)
+if (!document.querySelector('#app')) {
+  // In production, `#app` may or may not exist.
+  const rootElement = document.createElement('div')
+  rootElement.id = 'app'
+  document.body.appendChild(rootElement)
+}
+createApp(App).mount('#app')
 
 // This error replaces another error which message is harder to understand and impossible to avoid util the issue https://github.com/storyblok/field-plugin/issues/107 has been resolved.
 throw new Error(

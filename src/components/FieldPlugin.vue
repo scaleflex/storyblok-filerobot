@@ -1,9 +1,9 @@
-import { FunctionComponent } from 'react'
-import { useFieldPlugin } from '@storyblok/field-plugin/react'
+<script setup lang="ts">
+import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 
-const FieldPlugin: FunctionComponent = () => {
-  const plugin = useFieldPlugin({
-    /*
+const plugin = useFieldPlugin({
+  enablePortalModal: true,
+  /*
     The `validateContent` parameter is optional. It allows you to
       - validate the content
       - make changes before sending it to the Storyblok Visual Editor
@@ -22,10 +22,12 @@ const FieldPlugin: FunctionComponent = () => {
         }
       }
     }
-    */
-  })
+  */
+})
+</script>
 
-  return <pre>{JSON.stringify(plugin, null, 2)}</pre>
-}
-
-export default FieldPlugin
+<template>
+  <pre>
+    {{ JSON.stringify(plugin, null, 2) }}
+  </pre>
+</template>
