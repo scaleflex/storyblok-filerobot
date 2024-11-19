@@ -1,12 +1,11 @@
 <script setup lang="ts">
-// @ts-nocheck
 
 import type { SetModalOpen } from '@storyblok/field-plugin'
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 
 const props = defineProps<{
   isModalOpen: boolean
-  setModalOpen: SetModalOpen<number>
+  setModalOpen: SetModalOpen<unknown>
   refreshAssets: () => void,
   isLoading: boolean,
   totalAssets: number
@@ -17,9 +16,16 @@ const plugin = useFieldPlugin({
 })
 
 const addAssetsDisabled = () => {
-  if (('limit' in plugin.data.options && plugin.data.options.limit == props.totalAssets && props.totalAssets > 0 ) || props.isLoading) return true
-  else return false
-}
+  if (
+    plugin.data?.options?.limit !== undefined &&
+    typeof plugin.data.options.limit === 'number' &&
+    plugin.data.options.limit === props.totalAssets &&
+    props.totalAssets > 0
+  ) {
+    return true;
+  }
+  return props.isLoading;
+};
 
 </script>
 

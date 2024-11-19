@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// @ts-nocheck
+
 import { onMounted, ref, watch, defineEmits } from 'vue';
 import './index.css'
 import ModalToggle from './ModalToggle.vue'
@@ -7,17 +7,25 @@ import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import Filerobot from './Filerobot.vue'
 import { VueDraggableNext } from 'vue-draggable-next'
 
+interface File {
+  uuid: string;
+  name: string;
+  type: string;
+  source: string;
+  extension: string;
+  ownerName: string;  // Define the ownerName property here
+  cdn: string;
+  attributes?: any; // Define attributes as optional
+}
+
 const plugin = useFieldPlugin({
-  enablePortalModal: true,
-  validateContent: (content: unknown) => ({
-    content: typeof content === 'object' ? content : [],
-  }),
+  enablePortalModal: true
 })
 
 const isValid = ref(false);
-const endpoint = ref(null);
+const endpoint = ref('');
 const isLoading = ref(false);
-const files = ref<any[]>([]);
+const files = ref<File[]>([]);
 const error = ref<string | null>(null)
 const isOverLimit = ref(false)
 const options = ref({
@@ -25,8 +33,19 @@ const options = ref({
   secTemplate: '',
   rootDir: '',
   limitType: '',
+  limit: 0,
+  attributes: '',
+  metaData: ''
 })
-const currentFile = ref({})
+const currentFile = ref<File>({
+  uuid: '', 
+  name: '', 
+  type: '', 
+  extension: '',
+  cdn: '', // Optional
+  ownerName: '', // Optional
+  source: '',
+})
 const popupShow = ref(false)
 
 let documentArr = ['video', 'image', 'audio']
@@ -42,7 +61,7 @@ watch(plugin, (newPlugin) => {
       newPlugin.actions.setContent([]);
       files.value = []
     } else {
-      files.value = newPlugin.data.content
+      files.value = newPlugin.data.content as File[]
     }
 
     if (!isEmpty(newPlugin.data.options.token) && !isEmpty(newPlugin.data.options.secTemplate) && !isEmpty(newPlugin.data.options.rootDir)) {
@@ -104,7 +123,7 @@ const updatFiles = (updatedFiles: any) => {
   }
   
   files.value = updatedFiles
-  plugin.actions.setContent(updatedFiles)
+  if (plugin?.actions) plugin.actions.setContent(updatedFiles)
 }
 
 const limitFiles = () => {
@@ -112,7 +131,7 @@ const limitFiles = () => {
   return -1
 }
 
-const fetchfileData = async (uuid) => {
+const fetchfileData = async (uuid: string) => {
   isLoading.value = true;
   error.value = null;
   const url = endpoint.value + '/files/' + uuid + '?format=select:human';
@@ -122,7 +141,7 @@ const fetchfileData = async (uuid) => {
     if (!response.ok) {
       throw new Error(`Error: ${response.status}`);
     }
-    const result: ApiResponse = await response.json();
+    const result = await response.json();
     return result; // Return the result to be collected in the parent function
   } catch (err) {
     error.value = (err as Error).message;
@@ -170,7 +189,7 @@ const selectedFiles = async (filesSelected: Array<any>) => {
       const uuid = file.file.uuid;
       const response = await fetchfileData(uuid);
 
-      const tempFile = {
+      const tempFile: File = {
         uuid: response?.file?.uuid + '_' + makeIndexFiles(index),
         name: response?.file?.name,
         cdn: removeURLParameter(response?.file?.url?.cdn, 'vh'),
@@ -186,7 +205,6 @@ const selectedFiles = async (filesSelected: Array<any>) => {
 
       return tempFile; // Return the data for each file
     } catch (err) {
-      console.error(`Error fetching data for file ${uuid}:`, err);
       return null; // Return null in case of error for this file
     }
   });
@@ -207,7 +225,7 @@ const selectedFiles = async (filesSelected: Array<any>) => {
     // Set loading state to false after all fetches are done
     isLoading.value = false;
     // Optionally close the modal if needed
-    plugin.actions.setModalOpen(false);
+    if (plugin?.actions) plugin.actions.setModalOpen(false);
   }
 };
 
@@ -220,12 +238,14 @@ const hasQueryString = (url: string) => {
   }
 }
 
-const checkExist = (file) => {
-  files.value.forEach((item) => {
-    if (item.uuid === file.uuid) return true
-  })
-  return false
+// Type guard to check if item has a uuid property
+function isItemWithUuid(item: unknown): item is { uuid: string } {
+  return typeof (item as { uuid: unknown }).uuid === 'string';
 }
+
+const checkExist = (file: any) => {
+  return files.value.some((item) => isItemWithUuid(item) && item.uuid === file.uuid);
+};
 
 const refreshAssets = async () => {
   // Use 'tempFiles' to collect the promises from 'fetchfileData' calls
@@ -238,7 +258,7 @@ const refreshAssets = async () => {
         throw new Error('Network response was not ok ' + response.statusText);
       }
 
-      const tempFile = {
+      const tempFile: File = {
         uuid: response?.file?.uuid + '_' + makeIndexFiles(index),
         name: response?.file?.name,
         cdn: removeURLParameter(response?.file?.url?.cdn, 'vh'),
@@ -277,21 +297,26 @@ const createThumbnail = (url: string) => {
 } 
 
 const removeAsset = (key: number) => {
-  const tempFiles: never[] = []
-  files.value.forEach((file: any, indexKey: number) => {
-    if (indexKey !== key) {
-      tempFiles.push(file)
-    }
-  })
-  files.value = tempFiles
-  plugin.actions.setContent(tempFiles)
-}
+  files.value = files.value.filter((_, indexKey: number) => indexKey !== key);
+
+  // Check if 'plugin' and 'plugin.actions' are defined
+  if (plugin?.actions) {
+    plugin.actions.setContent(files.value);
+  } else {
+    console.warn('plugin.actions is undefined');
+  }
+};
 
 const removeAllAssets = () => {
-  files.value = []
-  plugin.actions.setContent('')
-  isOverLimit.value = false
-}
+  files.value = [];
+  // Check if 'plugin.actions' is defined before calling 'setContent'
+  if (plugin?.actions) {
+    plugin.actions.setContent([]);
+  } else {
+    console.warn('plugin.actions is undefined');
+  }
+  isOverLimit.value = false;
+};
 
 const getTotalAssets = () => {
   return files.value.length;
@@ -311,7 +336,7 @@ const createReviewImage = (url: string) => {
   else return url + '&width=350'
 }
 
-const checkFileIncludesImage = (file) => {
+const checkFileIncludesImage = (file: any) => {
   return file.type.includes('image')
 }
 
@@ -319,9 +344,6 @@ const getIsOverLimit = () => {
   return isOverLimit.value
 }
 
-const handleCustomEvent = (payload) => {
-  isOverLimit.value = payload;
-};
 
 const checkLimit = (updatedFiles: any) => {
  
@@ -332,7 +354,7 @@ const checkLimit = (updatedFiles: any) => {
   }
 }
 
-const log = (event) => {
+const log = () => {
   updatFiles(files.value)
 }
 
