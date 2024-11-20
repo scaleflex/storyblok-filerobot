@@ -11,19 +11,12 @@
     "deploy": "npm run build && npx @storyblok/field-plugin-cli@latest deploy"
   },
   "dependencies": {
-    "@filerobot/core": "^3.75.1",
-    "@filerobot/dropbox": "^3.75.1",
-    "@filerobot/explorer": "^3.75.1",
-    "@filerobot/google-drive": "^3.75.1",
-    "@filerobot/onedrive": "^3.75.1",
-    "@filerobot/progress-panel": "^3.75.1",
-    "@filerobot/url": "^3.75.1",
-    "@filerobot/xhr-upload": "^3.75.1",
     "@storyblok/field-plugin": "1.4.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "vue": "^3.2.47",
-    "vue-draggable-next": "^2.2.1"
+    "vue-draggable-next": "^2.2.1",
+    "vue-plugin-load-script": "^2.1.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "6.5.0",
