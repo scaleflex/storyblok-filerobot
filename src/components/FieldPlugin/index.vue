@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { onMounted, ref, watch, defineEmits } from 'vue';
+import { ref, watch } from 'vue';
 import './index.css'
 import ModalToggle from './ModalToggle.vue'
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
@@ -49,7 +49,6 @@ const currentFile = ref<File>({
 const popupShow = ref(false)
 
 let documentArr = ['video', 'image', 'audio']
-const emit = defineEmits(['customEvent']);
 
 function isEmpty(str: string) {
   return (!str || str.length === 0 );

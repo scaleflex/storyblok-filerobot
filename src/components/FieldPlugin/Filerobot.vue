@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import { watch, onMounted } from 'vue'
-import { loadScript } from "vue-plugin-load-script";
+import './filerobot-widget.min.js';
 
 interface SelectedFiles {
   (files: any[]): void; // Adjust the type of 'files' based on its structure
@@ -24,8 +24,6 @@ onMounted(() => {
 
 watch(() => plugin.data, (newPlugin) => {
     if (newPlugin && newPlugin.isModalOpen) {
-    loadScript("https://cdn.scaleflex.com/plugins/filerobot-widget/v3/latest/filerobot-widget.min.js")
-    .then(() => {
       // Script is loaded, do something
         let limitTypeArr: any = []
         if ('limitType' in newPlugin.options && newPlugin.options.limitType && newPlugin.options.limitType != '') {
@@ -90,10 +88,6 @@ watch(() => plugin.data, (newPlugin) => {
             files = []
             return false
         });
-    })
-    .catch(() => {
-      // Failed to fetch script
-    });
     }
 })
 
