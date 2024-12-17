@@ -371,3 +371,9 @@ hr {
   width: 12px;
   margin-left: 4px;
 }
+
+
+.filerobot-Explorer-inner {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}

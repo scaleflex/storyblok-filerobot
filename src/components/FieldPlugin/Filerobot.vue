@@ -31,6 +31,7 @@ watch(() => plugin.data, (newPlugin) => {
             return item.trim();
           })
         }
+        const imageNotExpired = newPlugin.options.imageNotExpired;
         const container = newPlugin.options.token;
         const securityTemplateID = newPlugin.options.secTemplate;
         const rootFolderPath = newPlugin.options.rootDir ?? '/';
@@ -48,37 +49,80 @@ watch(() => plugin.data, (newPlugin) => {
           dev: false // optional, default: false
         });
 
-        filerobot
-        .use(Explorer, {
-            target: '#filerobot-widget',
-            config: {
-              rootFolderPath: rootFolderPath,
-            },
-            inline: true,
-            width: '100%',
-            height: '100%',
-            resetAfterClose: true,
-            disableExportButton: false,
-            hideExportButtonIcon: true,
-            preventExportDefaultBehavior: true,
-            disableDownloadButton: false,
-            hideDownloadButtonIcon: true,
-            preventDownloadDefaultBehavior: true,
-            noImgOperationsAndDownload: true,
-            hideDownloadTransformationOption: true,
-            disableFileResolutionFallback: true,
-            showFoldersTree: false,
-            defaultFieldKeyOfBulkEditPanel: 'title',
-            locale: {
+        interface Filters {
+          mimeTypes: any;
+          metadata?: { key: string; value: string[] }[]; // Optional 'metadata' property
+        }
+
+        let configs: {
+          target: string;
+          config: { rootFolderPath: string };
+          inline: boolean;
+          width: string;
+          height: string;
+          resetAfterClose: boolean;
+          disableExportButton: boolean;
+          hideExportButtonIcon: boolean;
+          preventExportDefaultBehavior: boolean;
+          disableDownloadButton: boolean;
+          hideDownloadButtonIcon: boolean;
+          preventDownloadDefaultBehavior: boolean;
+          noImgOperationsAndDownload: boolean;
+          hideDownloadTransformationOption: boolean;
+          disableFileResolutionFallback: boolean;
+          showFoldersTree: boolean;
+          defaultFieldKeyOfBulkEditPanel: string;
+          disableFiltersAndSearch: boolean;
+          locale: {
+            strings: { mutualizedExportButtonLabel: string; mutualizedDownloadButton: string };
+          };
+          filters: Filters;
+          forceFilters?: boolean;
+        } = {
+          target: '#filerobot-widget',
+          config: { rootFolderPath: rootFolderPath },
+          inline: true,
+          width: '100%',
+          height: '100vh',
+          resetAfterClose: true,
+          disableExportButton: false,
+          hideExportButtonIcon: true,
+          preventExportDefaultBehavior: true,
+          disableDownloadButton: false,
+          hideDownloadButtonIcon: true,
+          preventDownloadDefaultBehavior: true,
+          noImgOperationsAndDownload: true,
+          hideDownloadTransformationOption: true,
+          disableFileResolutionFallback: true,
+          showFoldersTree: false,
+          defaultFieldKeyOfBulkEditPanel: 'title',
+          disableFiltersAndSearch: true,
+          locale: {
             strings: {
-                mutualizedExportButtonLabel: 'Insert',
-                mutualizedDownloadButton: 'Insert',
+              mutualizedExportButtonLabel: 'Insert',
+              mutualizedDownloadButton: 'Insert',
             },
-            },
-            filters: {
-            mimeTypes: limitTypeArr, // Replace with an array of MIME types if needed
-            }
-        })
+          },
+          filters: {
+            mimeTypes: limitTypeArr,
+          },
+        };
+
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const day = String(today.getDate()).padStart(2, '0');
+
+        // Combine into the desired format
+        const currentDate = `${year}-${month}-${day}`;
+
+        if (imageNotExpired == 'true') {
+          configs.filters.metadata = [{ key: 'gueltig_bis', value: [`${currentDate}..`, 'EMPTY'] }];
+          configs.forceFilters = true;
+        }
+
+        filerobot
+        .use(Explorer, configs)
         .use(XHRUpload)
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment     
         // @ts-ignore
