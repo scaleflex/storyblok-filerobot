@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import { watch, onMounted } from 'vue'
-import './filerobot-widget.min.js';
+import { loadScript } from "vue-plugin-load-script";
 
 interface SelectedFiles {
   (files: any[]): void; // Adjust the type of 'files' based on its structure
@@ -25,6 +25,8 @@ onMounted(() => {
 watch(() => plugin.data, (newPlugin) => {
     if (newPlugin && newPlugin.isModalOpen) {
       // Script is loaded, do something
+      loadScript("https://cdn.scaleflex.com/plugins/filerobot-widget/v3/latest/filerobot-widget.min.js")
+      .then(() => {
         let limitTypeArr: any = []
         if ('limitType' in newPlugin.options && newPlugin.options.limitType && newPlugin.options.limitType != '') {
           limitTypeArr = newPlugin.options.limitType.split(",").map(function(item) {
@@ -96,7 +98,7 @@ watch(() => plugin.data, (newPlugin) => {
           disableFileResolutionFallback: true,
           showFoldersTree: false,
           defaultFieldKeyOfBulkEditPanel: 'title',
-          disableFiltersAndSearch: true,
+          disableFiltersAndSearch: false,
           locale: {
             strings: {
               mutualizedExportButtonLabel: 'Insert',
@@ -118,7 +120,7 @@ watch(() => plugin.data, (newPlugin) => {
 
         if (imageNotExpired == 'true') {
           configs.filters.metadata = [{ key: 'gueltig_bis', value: [`${currentDate}..`, 'EMPTY'] }];
-          configs.forceFilters = true;
+          //configs.forceFilters = true;
         }
 
         filerobot
@@ -132,6 +134,10 @@ watch(() => plugin.data, (newPlugin) => {
             files = []
             return false
         });
+      })
+    .catch(() => {
+      // Failed to fetch script
+    });
     }
 })
 
