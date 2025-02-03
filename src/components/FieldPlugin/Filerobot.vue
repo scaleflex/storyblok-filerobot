@@ -18,14 +18,14 @@ const plugin = useFieldPlugin({
 onMounted(() => {
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'https://cdn.scaleflex.com/plugins/filerobot-widget/v3/latest/filerobot-widget.min.css';
+  link.href = 'https://cdn.scaleflex.com/plugins/filerobot-widget/v3/3.103.3/filerobot-widget.min.css';
   document.head.appendChild(link);
 })
 
 watch(() => plugin.data, (newPlugin) => {
     if (newPlugin && newPlugin.isModalOpen) {
       // Script is loaded, do something
-      loadScript("https://cdn.scaleflex.com/plugins/filerobot-widget/v3/latest/filerobot-widget.min.js")
+      loadScript("https://cdn.scaleflex.com/plugins/filerobot-widget/v3/3.103.3/filerobot-widget.min.js")
       .then(() => {
         let limitTypeArr: any = []
         if ('limitType' in newPlugin.options && newPlugin.options.limitType && newPlugin.options.limitType != '') {
@@ -51,6 +51,13 @@ watch(() => plugin.data, (newPlugin) => {
           dev: false // optional, default: false
         });
 
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const day = String(today.getDate()).padStart(2, '0');
+
+        // Combine into the desired format
+        const currentDate = `${year}-${month}-${day}`;
         interface Filters {
           mimeTypes: any;
           metadata?: { key: string; value: string[] }[]; // Optional 'metadata' property
@@ -109,18 +116,10 @@ watch(() => plugin.data, (newPlugin) => {
             mimeTypes: limitTypeArr,
           },
         };
-
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
-        const day = String(today.getDate()).padStart(2, '0');
-
-        // Combine into the desired format
-        const currentDate = `${year}-${month}-${day}`;
-
+        
         if (imageNotExpired == 'true') {
           configs.filters.metadata = [{ key: 'gueltig_bis', value: [`${currentDate}..`, 'EMPTY'] }];
-          //configs.forceFilters = true;
+          configs.forceFilters = true;
         }
 
         filerobot

@@ -243,7 +243,7 @@ function isItemWithUuid(item: unknown): item is { uuid: string } {
 }
 
 const checkExist = (file: any) => {
-  return files.value.some((item) => isItemWithUuid(item) && item.uuid === file.uuid);
+  return files.value.some((item) => {isItemWithUuid(item) && item.uuid === file.uuid});
 };
 
 const refreshAssets = async () => {
@@ -281,6 +281,7 @@ const refreshAssets = async () => {
 
   // Await all promises and filter out undefined values
   const results = await Promise.all(promises);
+ 
   const tempFiles = results.filter(file => file !== undefined);
   
   let updatedFiles = [...tempFiles];
