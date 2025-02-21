@@ -15,6 +15,27 @@ const plugin = useFieldPlugin({
   enablePortalModal: true,
 })
 
+const convertForceFilters = (forceFiltersStr: any) => {
+    // ex: [{"key": "gueltig_bis", "value": ["$CURRENT_DATE..", "EMPTY"]}]
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const day = String(today.getDate()).padStart(2, '0');
+
+    // Combine into the desired format
+    const currentDate = `${year}-${month}-${day}`;
+
+    // Replace $CURRENT_DATE with actual date
+    forceFiltersStr = forceFiltersStr.replace(/\$CURRENT_DATE/g, currentDate);
+    // Convert string to an array (parse JSON safely)
+    try {
+        return JSON.parse(forceFiltersStr);
+    } catch (error) {
+        console.error("Invalid JSON format:", error);
+        return [];
+    }
+}
+
 onMounted(() => {
   const link = document.createElement('link');
   link.rel = 'stylesheet';
@@ -33,7 +54,7 @@ watch(() => plugin.data, (newPlugin) => {
             return item.trim();
           })
         }
-        const imageNotExpired = newPlugin.options.imageNotExpired;
+        const forceFilters = newPlugin.options.forceFilters;
         const container = newPlugin.options.token;
         const securityTemplateID = newPlugin.options.secTemplate;
         const rootFolderPath = newPlugin.options.rootDir ?? '/';
@@ -51,16 +72,9 @@ watch(() => plugin.data, (newPlugin) => {
           dev: false // optional, default: false
         });
 
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
-        const day = String(today.getDate()).padStart(2, '0');
-
-        // Combine into the desired format
-        const currentDate = `${year}-${month}-${day}`;
         interface Filters {
           mimeTypes: any;
-          metadata?: { key: string; value: string[] }[]; // Optional 'metadata' property
+          metadata?: any; // Optional 'metadata' property
         }
 
         let configs: {
@@ -116,9 +130,9 @@ watch(() => plugin.data, (newPlugin) => {
             mimeTypes: limitTypeArr,
           },
         };
-        
-        if (imageNotExpired == 'true') {
-          configs.filters.metadata = [{ key: 'gueltig_bis', value: [`${currentDate}..`, 'EMPTY'] }];
+
+        if (forceFilters && forceFilters.trim() != '') {
+          configs.filters.metadata = convertForceFilters(forceFilters);
           configs.forceFilters = true;
         }
 
