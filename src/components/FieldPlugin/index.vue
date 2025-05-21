@@ -50,6 +50,8 @@ const popupShow = ref(false)
 
 let documentArr = ['video', 'image', 'audio']
 
+const patternMeta = /^meta\[([a-zA-Z0-9_-]+(?:,\s*[a-zA-Z0-9_-]+)*)\]$/;
+
 function isEmpty(str: string) {
   return (!str || str.length === 0 );
 }
@@ -87,11 +89,45 @@ const getTypeAssets = (type: any) => {
   return arr[0]
 }
 
+const filterObjectByKeys = (obj:any, matchKeys: any) => {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([key]) => matchKeys.includes(key))
+  );
+}
+
+
+function extractAndRemoveMeta(input: any) {
+  const pattern = /meta\[([^\]]+)\],?/;
+  const match = input.match(pattern);
+
+  if (match) {
+    const metaValues = match[1].split(/\s*,\s*/); // ['test-multi-select', 'multi_select']
+    const cleanedString = input.replace(pattern, '').trim(); // remove meta[...] part
+    return {
+      meta: metaValues,
+      rest: cleanedString
+    };
+  }
+
+  // Không có meta[...] → trả chuỗi gốc và null
+  return {
+    meta: null,
+    rest: input.trim()
+  };
+}
+
 const getAttributesData = (file: any) => {
   let r: { [key: string]: any } = {};
   let metaCurrent = ['title', 'description']
   if ('attributes' in options.value && options.value.attributes != undefined) {
-    let arr = options.value.attributes.split(",");
+    let attributesData = extractAndRemoveMeta(options.value.attributes);
+    
+    if (attributesData.meta != null) {
+      metaCurrent = attributesData.meta
+       r['meta'] = filterObjectByKeys(file['meta'], metaCurrent)
+    }
+
+    let arr = attributesData.rest.split(",");
     for (let value of arr) {
       let valueTrim = value.trim();
       r[valueTrim] = file[valueTrim]
