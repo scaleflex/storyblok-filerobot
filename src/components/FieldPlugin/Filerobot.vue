@@ -2,6 +2,7 @@
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import { watch, onMounted } from 'vue'
 import { loadScript } from "vue-plugin-load-script";
+import { isPreviewMode } from './usePreviewState'
 
 interface SelectedFiles {
   (files: any[]): void; // Adjust the type of 'files' based on its structure
@@ -39,14 +40,14 @@ const convertForceFilters = (forceFiltersStr: any) => {
 onMounted(() => {
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'https://cdn.scaleflex.com/plugins/filerobot-widget/v3/3.103.3/filerobot-widget.min.css';
+  link.href = 'https://scaleflex.cloudimg.io/v7/plugins/widget/v4/latest/scaleflex-widget.min.css';
   document.head.appendChild(link);
 })
 
 watch(() => plugin.data, (newPlugin) => {
-    if (newPlugin && newPlugin.isModalOpen) {
+    if (newPlugin && newPlugin.isModalOpen && !isPreviewMode.value) {
       // Script is loaded, do something
-      loadScript("https://cdn.scaleflex.com/plugins/filerobot-widget/v3/3.103.3/filerobot-widget.min.js")
+      loadScript("https://scaleflex.cloudimg.io/v7/plugins/widget/v4/latest/scaleflex-widget.min.js")
       .then(() => {
         let limitTypeArr: any = []
         if ('limitType' in newPlugin.options && newPlugin.options.limitType && newPlugin.options.limitType != '') {
@@ -56,15 +57,20 @@ watch(() => plugin.data, (newPlugin) => {
         }
         const forceFilters = newPlugin.options.forceFilters;
         const container = newPlugin.options.token;
+
         const securityTemplateID = newPlugin.options.secTemplate;
         const rootFolderPath = newPlugin.options.rootDir ?? '/';
+        const disableTransformations = (newPlugin.options.disableTransformations === undefined) ? 1 : parseInt(newPlugin.options.disableTransformations);
+        const enableAIEmbed = (newPlugin.options.enableAIEmbed === undefined) ? 0 : parseInt(newPlugin.options.enableAIEmbed);
+
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment     
         // @ts-ignore
-        const Filerobot = window.Filerobot;
-        const Core = Filerobot.Core; // required (docs: https://www.npmjs.com/package/@filerobot/core)
-        const Explorer = Filerobot.Explorer; // required (docs: https://www.npmjs.com/package/@filerobot/explorer)
-        const XHRUpload = Filerobot.XHRUpload; // required (docs: https://www.npmjs.com/package/@filerobot/xhr-upload)
-        const filerobot = Core({
+        const ScaleflexWidget = window.ScaleflexWidget;
+        const Core = ScaleflexWidget.Core; // required (docs: https://www.npmjs.com/package/@filerobot/core)
+        const Explorer = ScaleflexWidget.Explorer; // required (docs: https://www.npmjs.com/package/@filerobot/explorer)
+        const XHRUpload = ScaleflexWidget.XHRUpload; // required (docs: https://www.npmjs.com/package/@filerobot/xhr-upload)
+        const ProgressPanel = ScaleflexWidget.ProgressPanel
+        const scaleflexWidget = Core({
           securityTemplateId: securityTemplateID,
           // sassKey:
           //   "SASS__v1.05__wM0gTO0UTO3AzN4AjN4YTMxYDN6AXC0QTM6QWamlAMwQjN4oTZnFWCtlmbox2ZiZ2Lt92YuQ3bi9mclxWam5SawFGHvlmLlJ3b0NncpFmLpBXYu0WauhGbnJmZboDZJADMwIjM6AXatVXCwADMyIjOtBXb1lAMwAjMyoTb1lQNwIzM5MjN3YTM6Q3c__b3609fa624",
@@ -90,17 +96,19 @@ watch(() => plugin.data, (newPlugin) => {
           disableDownloadButton: boolean;
           hideDownloadButtonIcon: boolean;
           preventDownloadDefaultBehavior: boolean;
-          noImgOperationsAndDownload: boolean;
-          hideDownloadTransformationOption: boolean;
+          hideDownloadVariationsOption: any;
           disableFileResolutionFallback: boolean;
           showFoldersTree: boolean;
           defaultFieldKeyOfBulkEditPanel: string;
           disableFiltersAndSearch: boolean;
+          showProgressDetails: boolean;
           locale: {
             strings: { mutualizedExportButtonLabel: string; mutualizedDownloadButton: string };
           };
           filters: Filters;
           forceFilters?: boolean;
+          ExploreViewComponent: any;
+          enableAIEmbed: any;
         } = {
           target: '#filerobot-widget',
           config: { rootFolderPath: rootFolderPath },
@@ -114,12 +122,12 @@ watch(() => plugin.data, (newPlugin) => {
           disableDownloadButton: false,
           hideDownloadButtonIcon: true,
           preventDownloadDefaultBehavior: true,
-          noImgOperationsAndDownload: true,
-          hideDownloadTransformationOption: true,
+          hideDownloadVariationsOption: disableTransformations,
           disableFileResolutionFallback: true,
           showFoldersTree: false,
           defaultFieldKeyOfBulkEditPanel: 'title',
           disableFiltersAndSearch: false,
+          showProgressDetails: true,
           locale: {
             strings: {
               mutualizedExportButtonLabel: 'Insert',
@@ -129,6 +137,8 @@ watch(() => plugin.data, (newPlugin) => {
           filters: {
             mimeTypes: limitTypeArr,
           },
+          ExploreViewComponent: ScaleflexWidget.Explorer.ExploreViewComponent,
+          enableAIEmbed: enableAIEmbed,
         };
 
         if (forceFilters && forceFilters.trim() != '') {
@@ -136,16 +146,20 @@ watch(() => plugin.data, (newPlugin) => {
           configs.forceFilters = true;
         }
 
-        filerobot
+        scaleflexWidget
         .use(Explorer, configs)
+        .use(ProgressPanel, {
+          target: '#filerobot-widget-progress-panel',
+        })
         .use(XHRUpload)
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment     
         // @ts-ignore
         .on('export', function(files) {
-            // Define these functions or replace them with actual logic
-            props.selectedFiles(files)
-            files = []
-            return false
+          console.log(files[0].file.url.download);
+          // Define these functions or replace them with actual logic
+          props.selectedFiles(files)
+          files = []
+          return false
         });
       })
     .catch(() => {
@@ -157,5 +171,8 @@ watch(() => plugin.data, (newPlugin) => {
 </script>
 
 <template>
-  <div id='filerobot-widget'></div>
+  <div v-show="!isPreviewMode">
+    <div id='filerobot-widget'></div>
+    <div id='filerobot-widget-progress-panel'></div>
+  </div>
 </template>
