@@ -47,7 +47,7 @@ const convertForceFilters = (str: string) => {
 }
 
 const buildConfig = (options: any) => {
-  const { token, secTemplate, rootDir, limitType, forceFilters } = options
+  const { token, secTemplate, rootDir, limitType, forceFilters, disableTransformations, enableAIEmbed } = options
 
   const pickerConfig: Record<string, any> = {
     auth: {
@@ -64,6 +64,9 @@ const buildConfig = (options: any) => {
     rememberLastFolder: true,
     rememberLastView: true,
   }
+
+  pickerConfig.transformations = (disableTransformations === undefined) ? false : Boolean(disableTransformations);
+  pickerConfig.enableAISearch = (enableAIEmbed === undefined) ? false : Boolean(enableAIEmbed);
 
   const forcedFilters: Record<string, any> = {}
 
@@ -105,8 +108,16 @@ const initPicker = async (options: any) => {
 
   if (!listenerAttached) {
     el.addEventListener('ap-select', (e: CustomEvent) => {
-      console.log(e);
-      props.selectedFiles(e.detail?.assets ?? [])
+      const assets = (e.detail?.assets ?? []).map((asset: any) => ({
+        ...asset,
+        url: {
+          ...asset.url,
+          cdn: asset.transformation?.url?.cdn
+            ?? asset.transformation?.url?.permalink_cdn
+            ?? asset.url?.cdn,
+        },
+      }))
+      props.selectedFiles(assets)
     })
     listenerAttached = true
   }

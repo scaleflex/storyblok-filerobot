@@ -16,12 +16,8 @@ const plugin = useFieldPlugin({
 })
 
 const addAssetsDisabled = () => {
-  if (
-    plugin.data?.options?.limit !== undefined &&
-    typeof plugin.data.options.limit === 'number' &&
-    plugin.data.options.limit === props.totalAssets &&
-    props.totalAssets > 0
-  ) {
+  const limit = Number(plugin.data?.options?.limit);
+  if (limit > 0 && props.totalAssets >= limit) {
     return true;
   }
   return props.isLoading;

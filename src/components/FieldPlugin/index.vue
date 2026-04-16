@@ -366,6 +366,10 @@ const createThumbnail = (url: string) => {
   const [base, query] = url.split('?')
 
   const params = new URLSearchParams(query || '')
+  params.delete('w')
+  params.delete('h')
+  params.delete('width')
+  params.delete('height')
   params.set('width', '55')
   params.set('height', '55')
 
