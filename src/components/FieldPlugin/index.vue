@@ -227,76 +227,52 @@ const removeURLParameter = (url: string, parameter: string) => {
 }
 
 
-const selectedFiles = async (filesSelected: Array<any>) => {
-  // Set loading state to true before starting the fetch calls
+const selectedFiles = (assetsSelected: Array<any>) => {
   isLoading.value = true
   error.value = null
 
-  // Create an array to hold all the fetch promises and collect the results
-  const fetchPromises = filesSelected.map(async (file, index) => {
-    try {
-      // Call fetchfileData for each file's uuid (assuming file has a 'uuid' property)
-      let cdn = ''
-      if (file.file?.url?.download !== undefined) {
-        cdn = removeURLParameter(file.file?.url?.download, 'vh')
-      }
+  try {
+    const tempFiles = assetsSelected.map((asset, index) => {
+      const rawCdn = asset.url?.cdn ?? ''
+      let cdn = removeURLParameter(rawCdn, 'vh')
 
-      const uuid = file.file.uuid
-      const response = await fetchfileData(uuid)
+      // Prefer full MIME type (mime) over category type (e.g. 'image')
+      let type: string = asset.mime ?? asset.type ?? 'application/octet-stream'
+      let extension: string = asset.extension ?? ''
 
-      if (cdn === '') {
-        cdn = removeURLParameter(response?.file?.url?.cdn, 'vh')
-      }
-
-      let type = response?.file?.type;
-      let extension = response?.file?.extension;
-
-      const params = new URL(cdn).searchParams;
-      if (params.has("force_format")) {
-        let force_format = params.get("force_format");
-        if (force_format === 'awebp,webp') {
-          force_format = 'webp';
+      try {
+        const params = new URL(cdn).searchParams
+        if (params.has('force_format')) {
+          let force_format = params.get('force_format')
+          if (force_format === 'awebp,webp') force_format = 'webp'
+          type = 'image/' + force_format
+          extension = force_format!
         }
-        type = 'image/' + force_format;
-        extension = force_format;
-      }
+      } catch { /* invalid URL, skip */ }
 
       const tempFile: File = {
-        uuid: response?.file?.uuid + '_' + makeIndexFiles(index),
-        name: response?.file?.name,
-        cdn: cdn,
-        extension: extension,
+        uuid: asset.uuid + '_' + makeIndexFiles(index),
+        name: asset.name ?? '',
+        cdn,
+        extension,
         source: 'filerobot',
-        type: type,
-        ownerName: response?.file?.owner?.name,
+        type,
+        ownerName: asset.owner?.name ?? '',
       }
 
       if ('attributes' in options.value && options.value.attributes != undefined) {
-        tempFile.attributes = getAttributesData(response?.file)
+        tempFile.attributes = getAttributesData(asset)
       }
 
-      return tempFile // Return the data for each file
-    } catch (err) {
-      return null // Return null in case of error for this file
-    }
-  })
+      return tempFile
+    })
 
-  // Wait for all fetch operations to complete and collect all results
-  try {
-    const results = await Promise.all(fetchPromises)
-
-    const tempFiles = results.filter(file => file !== undefined)
-
-    let updatedFiles = [...files.value, ...tempFiles]
-
+    const updatedFiles = [...files.value, ...tempFiles.filter(Boolean)]
     updatFiles(updatedFiles)
-    // Handle the results (e.g., store them or update UI)
   } catch (err) {
-    console.error('Error fetching files:', err)
+    console.error('Error processing selected files:', err)
   } finally {
-    // Set loading state to false after all fetches are done
     isLoading.value = false
-    // Optionally close the modal if needed
     if (plugin?.actions) plugin.actions.setModalOpen(false)
   }
 }

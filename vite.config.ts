@@ -11,7 +11,17 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.ts'],
   },
-  plugins: [vue(), cssInjectedByJsPlugin(), ...plugins],
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag.startsWith('sfx-'),
+        },
+      },
+    }),
+    cssInjectedByJsPlugin(),
+    ...plugins,
+  ],
   build: {
     rollupOptions: {
       output: {
