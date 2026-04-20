@@ -46,9 +46,26 @@ const convertForceFilters = (str: string) => {
   }
 }
 
-const buildConfig = (options: any) => {
-  const { token, secTemplate, rootDir, limitType, forceFilters, disableTransformations, enableAIEmbed } = options
+const DEFAULT_PICKER_CONFIG = {
+  multiSelect: true,
+  showMetadata: true,
+  rememberLastTab: true,
+  rememberLastFolder: true,
+  rememberLastView: true,
+}
 
+const buildConfig = (options: any) => {
+  const { token, secTemplate, rootDir, limitType, forceFilters, assetPickerConfig } = options
+  let extraConfig: Record<string, any> = {}
+  if (assetPickerConfig && assetPickerConfig.trim() !== '') {
+    try {
+      extraConfig = JSON.parse(assetPickerConfig);
+    } catch (e) {
+      console.error('assetPickerConfig: invalid JSON', e);
+    }
+  }
+
+  
   const pickerConfig: Record<string, any> = {
     auth: {
       mode: 'securityTemplate',
@@ -58,15 +75,9 @@ const buildConfig = (options: any) => {
     uploader: {},
     rootFolderPath: rootDir ?? '/',
     displayMode: 'inline',
-    multiSelect: true,
-    showMetadata: true,
-    rememberLastTab: true,
-    rememberLastFolder: true,
-    rememberLastView: true,
+    ...DEFAULT_PICKER_CONFIG,
+    ...extraConfig,
   }
-
-  pickerConfig.transformations = (disableTransformations === undefined) ? false : Boolean(disableTransformations);
-  pickerConfig.enableAISearch = (enableAIEmbed === undefined) ? false : Boolean(enableAIEmbed);
 
   const forcedFilters: Record<string, any> = {}
 

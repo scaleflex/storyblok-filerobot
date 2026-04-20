@@ -38,8 +38,7 @@ const options = ref({
   limit: 0,
   attributes: '',
   metaData: '',
-  enableAIEmbed: 0,
-  disableTransformations: 1,
+  assetPickerConfig: '',
 })
 const currentFile = ref<File>({
   uuid: '',
@@ -77,10 +76,7 @@ watch(plugin, (newPlugin) => {
     if (!isEmpty(newPlugin.data.options.token) && !isEmpty(newPlugin.data.options.secTemplate) && !isEmpty(newPlugin.data.options.rootDir)) {
       isValid.value = true
       endpoint.value = `https://api.filerobot.com/${newPlugin.data.options.token}/v5`
-      let disableTransformations = 0;
-      if (newPlugin.data.options.disableTransformations == undefined) {
-        disableTransformations = 1;
-      }
+      
       options.value = {
         token: newPlugin.data.options.token,
         secTemplate: newPlugin.data.options.secTemplate,
@@ -89,8 +85,7 @@ watch(plugin, (newPlugin) => {
         attributes: newPlugin.data.options.attributes,
         limitType: newPlugin.data.options.limitType,
         metaData: newPlugin.data.options.metaData,
-        enableAIEmbed: Number(newPlugin.data.options.enableAIEmbed),
-        disableTransformations: disableTransformations,
+        assetPickerConfig: newPlugin.data.options.assetPickerConfig ?? '',
       }
     } else {
       isValid.value = false
@@ -478,14 +473,7 @@ const log = () => {
              class="size-6">
           <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
         </svg>
-        <strong>disableTransformations</strong> is optional (ex: 0 or 1). By default, it's set to 1.
-      </div>
-      <div>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-             class="size-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
-        </svg>
-        <strong>enableAIEmbed</strong> is optional (ex: 0 or 1). By default, it's set to 0.
+        <strong>assetPickerConfig</strong> is optional. A JSON string to customize the asset picker (ex: {"enableAISearch": false, "transformations": false}). Defaults: multiSelect, showMetadata, rememberLastTab, rememberLastFolder, rememberLastView are all true.
       </div>
     </div>
     <div v-if="isValid">

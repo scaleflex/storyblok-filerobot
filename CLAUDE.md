@@ -112,9 +112,8 @@ Configured in **Storyblok → Field Plugin → Options**:
 | `limitType` | No | Comma-separated MIME categories: `image`, `video`, `audio`, `document` |
 | `attributes` | No | Comma-separated file attributes to store, e.g. `meta[field1,field2],tags,info` |
 | `metaData` | No | Metadata field configuration |
-| `disableTransformations` | No | `1` (default) hides download variations; `0` enables them |
-| `enableAIEmbed` | No | `1` to enable AI embed feature; `0` (default) to disable |
 | `forceFilters` | No | JSON string for metadata filters, supports `$CURRENT_DATE` variable |
+| `assetPickerConfig` | No | JSON string to override asset picker config. Defaults: `{"multiSelect":true,"showMetadata":true,"rememberLastTab":true,"rememberLastFolder":true,"rememberLastView":true}` |
 
 ---
 
