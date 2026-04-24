@@ -473,7 +473,9 @@ const log = () => {
              class="size-6">
           <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
         </svg>
-        <strong>assetPickerConfig</strong> is optional. A JSON string to customize the asset picker (ex: {"enableAISearch": false, "transformations": false}). Defaults: multiSelect, showMetadata, rememberLastTab, rememberLastFolder, rememberLastView are all true.
+        <strong>assetPickerConfig</strong> is optional. A JSON string to customize the asset picker (ex: {"enableAISearch": false, "transformations": false}). 
+        Defaults: multiSelect, showMetadata, rememberLastTab, rememberLastFolder, rememberLastView are all true. 
+        Read the documentation at <a href="https://scaleflex.github.io/asset-picker/#/docs/configuration" target="_blank">here</a>
       </div>
     </div>
     <div v-if="isValid">

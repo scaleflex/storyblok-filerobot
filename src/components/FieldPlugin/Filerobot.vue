@@ -4,7 +4,7 @@ import { watch, onMounted, ref } from 'vue'
 import { isPreviewMode } from './usePreviewState'
 
 const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/0.2.10/sfx-uploader.min.js'
-const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/0.2.21/asset-picker.min.js'
+const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.0.3/asset-picker.min.js'
 
 interface SelectedFiles {
   (files: any[]): void
@@ -55,7 +55,7 @@ const DEFAULT_PICKER_CONFIG = {
 }
 
 const buildConfig = (options: any) => {
-  const { token, secTemplate, rootDir, limitType, forceFilters, assetPickerConfig } = options
+  const { token, secTemplate, rootDir, limitType, forceFilters, assetPickerConfig, disableTransformations, enableAIEmbed } = options
   let extraConfig: Record<string, any> = {}
   if (assetPickerConfig && assetPickerConfig.trim() !== '') {
     try {
@@ -65,7 +65,6 @@ const buildConfig = (options: any) => {
     }
   }
 
-  
   const pickerConfig: Record<string, any> = {
     auth: {
       mode: 'securityTemplate',
@@ -79,6 +78,10 @@ const buildConfig = (options: any) => {
     ...extraConfig,
   }
 
+  //This is to cover the old version when we removed the two options disableTransformations and enableAIEmbed
+  pickerConfig.transformations = (disableTransformations === undefined) ? false : Boolean(!parseInt(disableTransformations));
+  pickerConfig.enableAISearch = (enableAIEmbed === undefined) ? false : Boolean(parseInt(enableAIEmbed));
+  
   const forcedFilters: Record<string, any> = {}
 
   if (limitType && limitType.trim() !== '') {
