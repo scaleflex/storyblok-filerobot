@@ -61,7 +61,7 @@ function isEmpty(str: string) {
 
 watch(plugin, (newPlugin) => {
   if (newPlugin.type === 'loaded') {
-    if (typeof newPlugin.data.content === 'string') {
+    if (typeof newPlugin.data.content === 'string' || !Array.isArray(newPlugin.data.content)) {
       newPlugin.actions.setContent([])
       files.value = []
     } else {
