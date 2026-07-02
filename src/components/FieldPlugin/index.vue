@@ -39,6 +39,7 @@ const options = ref({
   attributes: '',
   metaData: '',
   assetPickerConfig: '',
+  cname: '',
 })
 const currentFile = ref<File>({
   uuid: '',
@@ -86,6 +87,7 @@ watch(plugin, (newPlugin) => {
         limitType: newPlugin.data.options.limitType,
         metaData: newPlugin.data.options.metaData,
         assetPickerConfig: newPlugin.data.options.assetPickerConfig ?? '',
+        cname: newPlugin.data.options.cname ?? '',
       }
     } else {
       isValid.value = false
@@ -200,6 +202,17 @@ const makeIndexFiles = (index: number) => {
   return index + files.value.length
 }
 
+const applyCname = (url: string, cname: string): string => {
+  if (!cname || !url) return url
+  try {
+    const u = new URL(url)
+    u.hostname = cname
+    return u.toString()
+  } catch {
+    return url
+  }
+}
+
 const removeURLParameter = (url: string, parameter: string) => {
   //prefer to use l.search if you have a location/link object
   var urlparts = url.split('?')
@@ -229,7 +242,7 @@ const selectedFiles = (assetsSelected: Array<any>) => {
   try {
     const tempFiles = assetsSelected.map((asset, index) => {
       const rawCdn = asset.url?.cdn ?? ''
-      let cdn = removeURLParameter(rawCdn, 'vh')
+      let cdn = applyCname(removeURLParameter(rawCdn, 'vh'), options.value.cname)
 
       // Prefer full MIME type (mime) over category type (e.g. 'image')
       let type: string = asset.mime ?? asset.type ?? 'application/octet-stream'
@@ -305,7 +318,7 @@ const refreshAssets = async () => {
         throw new Error('Network response was not ok ' + response.statusText)
       }
 
-      let cdn = removeURLParameter(response?.file?.url?.cdn, 'vh');
+      let cdn = applyCname(removeURLParameter(response?.file?.url?.cdn, 'vh'), options.value.cname);
       if (oldParams.size) {
         cdn = cdn + oldCDN.search;
       }
@@ -447,6 +460,13 @@ const log = () => {
     />
     <div class="missConfig" v-if="!isValid">
       <div>Please add 3 required options: <strong>token, secTemplate, rootDir</strong> from Filerobot <br /></div>
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+             class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+        </svg>
+        <strong>cname</strong> is optional (CNAME for Scaleflex assets)
+      </div>
       <div>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
              class="size-6">
