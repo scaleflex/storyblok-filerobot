@@ -178,10 +178,27 @@ const limitFiles = () => {
   return -1
 }
 
+const FIXED_API_FIELDS = ['hash_ifilehash']
+
+const getApiFields = () => {
+  let apiFields: string[] = []
+  if (options.value.assetPickerConfig && options.value.assetPickerConfig.trim() !== '') {
+    try {
+      const parsed = JSON.parse(options.value.assetPickerConfig)
+      if (Array.isArray(parsed.apiFields)) {
+        apiFields = parsed.apiFields
+      }
+    } catch (e) {
+      console.error('assetPickerConfig: invalid JSON', e)
+    }
+  }
+  return [...new Set([...FIXED_API_FIELDS, ...apiFields])]
+}
+
 const fetchfileData = async (uuid: string) => {
   isLoading.value = true
   error.value = null
-  const url = endpoint.value + '/files/' + uuid + '?format=select:human'
+  const url = endpoint.value + '/files/' + uuid + '?format=select:human&fields=' + getApiFields().join(',')
 
   try {
     const response = await fetch(url)
