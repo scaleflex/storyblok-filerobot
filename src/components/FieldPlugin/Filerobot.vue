@@ -3,8 +3,8 @@ import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import { watch, onMounted, ref } from 'vue'
 import { isPreviewMode } from './usePreviewState'
 
-const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.3.0/sfx-uploader.min.js'
-const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.3.0/asset-picker.min.js'
+const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.4.1/sfx-uploader.min.js'
+const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.4.1/asset-picker.min.js'
 
 interface SelectedFiles {
   (files: any[]): void
@@ -154,10 +154,10 @@ watch(() => plugin.data, (data) => {
 <style scoped>
 .sfx-picker-wrapper {
   width: 100%;
-  height: 100%;
+  height: calc(100vh - 60px);
 }
 
 sfx-asset-picker {
-  --ap-inline-height: calc(100vh - 60px);
+  height: calc(100vh - 60px);
 }
 </style>
