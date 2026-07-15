@@ -152,11 +152,6 @@ watch(() => plugin.data, (data) => {
 </template>
 
 <style scoped>
-.sfx-picker-wrapper {
-  width: 100%;
-  height: calc(100vh - 60px);
-}
-
 sfx-asset-picker {
   height: calc(100vh - 60px);
 }
