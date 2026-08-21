@@ -171,7 +171,7 @@ const getPreviewUrl = (url: string) => {
   try {
     const [base, query] = url.split('?')
     const params = new URLSearchParams(query || '')
-    params.set('width', '800')
+    // params.set('width', '800')
     return `${base}?${params.toString()}`
   } catch {
     return url

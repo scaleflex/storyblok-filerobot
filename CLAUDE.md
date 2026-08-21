@@ -62,7 +62,7 @@ src/
 ## Component Responsibilities
 
 ### `index.vue` — Core orchestrator
-- Reads plugin options (`token`, `secTemplate`, `rootDir`, `limit`, `limitType`, `attributes`, `metaData`, `disableTransformations`, `enableAIEmbed`) from `plugin.data.options`
+- Reads plugin options (`token`, `secTemplate`, `rootDir`, `limit`, `limitType`, `attributes`, `metaData`) from `plugin.data.options`
 - Validates required options (token + secTemplate + rootDir); shows config error if missing
 - Calls Filerobot REST API (`https://api.filerobot.com/{token}/v5/files/{uuid}?format=select:human`) to hydrate selected file metadata
 - Assembles `File` objects and persists via `plugin.actions.setContent()`

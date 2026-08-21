@@ -4,7 +4,7 @@ import { watch, onMounted, ref } from 'vue'
 import { isPreviewMode } from './usePreviewState'
 
 const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.19.2/sfx-uploader.min.js'
-const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.8.0/asset-picker.min.js'
+const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.9.0/asset-picker.min.js'
 
 interface SelectedFiles {
   (files: any[]): void
@@ -56,7 +56,7 @@ const DEFAULT_PICKER_CONFIG = {
 }
 
 const buildConfig = (options: any) => {
-  const { token, secTemplate, rootDir, limitType, forceFilters, assetPickerConfig, disableTransformations, enableAIEmbed } = options
+  const { token, secTemplate, rootDir, limitType, forceFilters, assetPickerConfig } = options
   let extraConfig: Record<string, any> = {}
   if (assetPickerConfig && assetPickerConfig.trim() !== '') {
     try {
@@ -83,10 +83,6 @@ const buildConfig = (options: any) => {
     ...extraConfig,
   }
 
-  //This is to cover the old version when we removed the two options disableTransformations and enableAIEmbed
-  pickerConfig.transformations = (disableTransformations === undefined) ? false : Boolean(!parseInt(disableTransformations));
-  pickerConfig.enableAISearch = (enableAIEmbed === undefined) ? false : Boolean(parseInt(enableAIEmbed));
-  
   const forcedFilters: Record<string, any> = {}
 
   if (limitType && limitType.trim() !== '') {
@@ -109,7 +105,7 @@ const buildConfig = (options: any) => {
   if (Object.keys(forcedFilters).length > 0) {
     pickerConfig.forcedFilters = forcedFilters
   }
-
+  console.log(pickerConfig);
   return pickerConfig
 }
 
@@ -127,15 +123,21 @@ const initPicker = async (options: any) => {
 
   if (!listenerAttached) {
     el.addEventListener('ap-select', (e: CustomEvent) => {
-      const assets = (e.detail?.assets ?? []).map((asset: any) => ({
-        ...asset,
-        url: {
-          ...asset.url,
-          cdn: asset.transformation?.url?.cdn
-            ?? asset.transformation?.url?.permalink_cdn
-            ?? asset.url?.cdn,
-        },
-      }))
+      const assets = (e.detail?.assets ?? []).map((asset: any) => {
+        const variantUrl = asset.selectedVariant?.url
+        const variantCdn = typeof variantUrl === 'string' ? variantUrl : variantUrl?.cdn
+
+        return {
+          ...asset,
+          url: {
+            ...asset.url,
+            cdn: variantCdn
+              ?? asset.transformation?.url?.cdn
+              ?? asset.transformation?.url?.permalink_cdn
+              ?? asset.url?.cdn,
+          },
+        }
+      })
       props.selectedFiles(assets)
     })
     listenerAttached = true
