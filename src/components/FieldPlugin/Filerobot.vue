@@ -105,7 +105,6 @@ const buildConfig = (options: any) => {
   if (Object.keys(forcedFilters).length > 0) {
     pickerConfig.forcedFilters = forcedFilters
   }
-  console.log(pickerConfig);
   return pickerConfig
 }
 
