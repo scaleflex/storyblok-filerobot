@@ -114,6 +114,8 @@ Configured in **Storyblok → Field Plugin → Options**:
 | `metaData` | No | Metadata field configuration |
 | `forceFilters` | No | JSON string for metadata filters, supports `$CURRENT_DATE` variable |
 | `assetPickerConfig` | No | JSON string to override asset picker config. Defaults: `{"multiSelect":true,"showMetadata":true,"rememberLastTab":true,"rememberLastFolder":true,"rememberLastView":true}` |
+| `uploaderConfig` | No | JSON string to override the uploader config (see [uploader docs](https://scaleflex.github.io/uploader/#/docs/configuration)). Merged into `assetPickerConfig`'s `uploader` key — takes precedence if both set `uploader`. Default: `{"metadataConfig":{"enforceRequiredBeforeUpload":"auto"}}` |
+| `useUserMarketAsFilter` | No | Metadata key (matching a Hub metadata field) to force-filter assets by the story's language (`plugin.data.storyLang`), e.g. `useUserMarketAsFilter=market` → `forcedFilters.market = { values: [storyLang] }`. Merged with any existing `forcedFilters` (from `limitType`, `forceFilters`, or `assetPickerConfig`) instead of overwriting them. |
 
 ---
 

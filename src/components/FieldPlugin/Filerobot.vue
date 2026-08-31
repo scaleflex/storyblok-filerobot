@@ -55,14 +55,23 @@ const DEFAULT_PICKER_CONFIG = {
   folderCreation: true
 }
 
-const buildConfig = (options: any) => {
-  const { token, secTemplate, rootDir, limitType, forceFilters, assetPickerConfig } = options
+const buildConfig = (options: any, storyLang?: string) => {
+  const { token, secTemplate, rootDir, limitType, forceFilters, assetPickerConfig, uploaderConfig, useUserMarketAsFilter } = options
   let extraConfig: Record<string, any> = {}
   if (assetPickerConfig && assetPickerConfig.trim() !== '') {
     try {
       extraConfig = JSON.parse(assetPickerConfig);
     } catch (e) {
       console.error('assetPickerConfig: invalid JSON', e);
+    }
+  }
+
+  let extraUploaderConfig: Record<string, any> = {}
+  if (uploaderConfig && uploaderConfig.trim() !== '') {
+    try {
+      extraUploaderConfig = JSON.parse(uploaderConfig);
+    } catch (e) {
+      console.error('uploaderConfig: invalid JSON', e);
     }
   }
 
@@ -83,7 +92,14 @@ const buildConfig = (options: any) => {
     ...extraConfig,
   }
 
-  const forcedFilters: Record<string, any> = {}
+  // uploaderConfig is dedicated to the uploader, so it wins over anything set via assetPickerConfig
+  pickerConfig.uploader = {
+    ...pickerConfig.uploader,
+    ...extraUploaderConfig,
+  }
+
+  // Seed from any forcedFilters already set via assetPickerConfig so it isn't clobbered below
+  const forcedFilters: Record<string, any> = { ...(pickerConfig.forcedFilters ?? {}) }
 
   if (limitType && limitType.trim() !== '') {
     const values = limitType
@@ -102,13 +118,19 @@ const buildConfig = (options: any) => {
     }
   }
 
+  if (useUserMarketAsFilter && useUserMarketAsFilter.trim() !== '' && storyLang) {
+    const marketValue = storyLang === 'default' ? 'ie' : storyLang
+    forcedFilters[useUserMarketAsFilter] = { values: [marketValue] }
+  }
+
   if (Object.keys(forcedFilters).length > 0) {
     pickerConfig.forcedFilters = forcedFilters
   }
+  
   return pickerConfig
 }
 
-const initPicker = async (options: any) => {
+const initPicker = async (options: any, storyLang?: string) => {
   if (!scriptsLoaded) {
     await loadScript(SFX_UPLOADER_JS)
     await loadScript(SFX_ASSET_PICKER_JS)
@@ -118,7 +140,7 @@ const initPicker = async (options: any) => {
   const el = pickerEl.value as any
   if (!el) return
 
-  el.config = buildConfig(options)
+  el.config = buildConfig(options, storyLang)
 
   if (!listenerAttached) {
     el.addEventListener('ap-select', (e: CustomEvent) => {
@@ -145,7 +167,7 @@ const initPicker = async (options: any) => {
 
 watch(() => plugin.data, (data) => {
   if (data?.isModalOpen && !isPreviewMode.value) {
-    initPicker(data.options)
+    initPicker(data.options, data.storyLang)
   }
 })
 </script>
