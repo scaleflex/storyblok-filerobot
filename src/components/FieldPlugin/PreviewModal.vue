@@ -58,6 +58,31 @@ const isEmpty = (val: any): boolean => {
   return false
 }
 
+// Hub stores locales like "cs-cz" while Storyblok's storyLang is the base code ("cs")
+const normalizeLangCode = (code: string): string => code?.toLowerCase().split('-')[0] ?? ''
+
+const isLangCode = (key: string): boolean => /^[a-z]{2,3}(-[a-z0-9]+)?$/i.test(key)
+
+const isLangMap = (val: any): boolean => {
+  if (typeof val !== 'object' || val === null || Array.isArray(val)) return false
+  const keys = Object.keys(val)
+  return keys.length > 0 && keys.every(isLangCode)
+}
+
+// Resolves a multi-language attribute value down to the story's language.
+// Storyblok's root/default language has no explicit code and maps to English.
+// Hides the attribute (returns undefined) when no matching language is found.
+const resolveAttributeValue = (val: any): any => {
+  if (!isLangMap(val)) return val
+  const rawLang = (plugin.data as any)?.storyLang
+  const lang = !rawLang || rawLang === 'default' ? 'en' : rawLang
+  const keys = Object.keys(val)
+  const matchKey =
+    keys.find((k) => k.toLowerCase() === lang.toLowerCase()) ??
+    keys.find((k) => normalizeLangCode(k) === normalizeLangCode(lang))
+  return matchKey ? val[matchKey] : undefined
+}
+
 const props = defineProps<{
   files: any[]
   currentFileIndex: number
@@ -279,17 +304,17 @@ const getPreviewUrl = (url: string) => {
             <div class="fr-section-divider"></div>
             <div class="fr-detail-label-header">Attributes</div>
             <template v-for="(val, key) in currentFile.attributes" :key="key">
-              <div v-if="String(key) !== 'meta' && !isEmpty(val)" class="fr-detail-row">
+              <div v-if="String(key) !== 'meta' && !isEmpty(resolveAttributeValue(val))" class="fr-detail-row">
                 <span class="fr-detail-label">{{ key }}</span>
-                <span v-if="isMultiline(val)" class="fr-detail-value fr-detail-multiline" v-html="formatValueHtml(val)"></span>
-                <span v-else class="fr-detail-value">{{ formatValueText(val) }}</span>
+                <span v-if="isMultiline(resolveAttributeValue(val))" class="fr-detail-value fr-detail-multiline" v-html="formatValueHtml(resolveAttributeValue(val))"></span>
+                <span v-else class="fr-detail-value">{{ formatValueText(resolveAttributeValue(val)) }}</span>
               </div>
               <template v-else>
                 <template v-for="(metaVal, metaKey) in val" :key="metaKey">
-                  <div v-if="!isEmpty(metaVal)" class="fr-detail-row">
+                  <div v-if="!isEmpty(resolveAttributeValue(metaVal))" class="fr-detail-row">
                     <span class="fr-detail-label">{{ getFieldTitle(String(metaKey)) }}</span>
-                    <span v-if="isMultiline(metaVal)" class="fr-detail-value fr-detail-multiline" v-html="formatValueHtml(metaVal)"></span>
-                    <span v-else class="fr-detail-value">{{ formatValueText(metaVal) }}</span>
+                    <span v-if="isMultiline(resolveAttributeValue(metaVal))" class="fr-detail-value fr-detail-multiline" v-html="formatValueHtml(resolveAttributeValue(metaVal))"></span>
+                    <span v-else class="fr-detail-value">{{ formatValueText(resolveAttributeValue(metaVal)) }}</span>
                   </div>
                 </template>
               </template>
