@@ -2,6 +2,7 @@
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import { watch, onMounted, ref } from 'vue'
 import { isPreviewMode } from './usePreviewState'
+import { resolveHubAuth, getAuthConfig } from './useHubAuth'
 
 const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.20.0/sfx-uploader.min.js'
 const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.14.0/asset-picker.min.js'
@@ -57,7 +58,7 @@ const DEFAULT_PICKER_CONFIG = {
 }
 
 const buildConfig = (options: any, storyLang?: string) => {
-  const { token, secTemplate, rootDir, limitType, forceFilters, assetPickerConfig, uploaderConfig, useUserMarketAsFilter } = options
+  const { token, secTemplate, rootDir, limitType, forceFilters, assetPickerConfig, uploaderConfig, useUserMarketAsFilter, useAuth } = options
   let extraConfig: Record<string, any> = {}
   if (assetPickerConfig && assetPickerConfig.trim() !== '') {
     try {
@@ -77,7 +78,7 @@ const buildConfig = (options: any, storyLang?: string) => {
   }
 
   const pickerConfig: Record<string, any> = {
-    auth: {
+    auth: useAuth === 'true' ? getAuthConfig() : {
       mode: 'securityTemplate',
       securityTemplateKey: secTemplate,
       projectToken: token,
@@ -136,6 +137,10 @@ const initPicker = async (options: any, storyLang?: string) => {
     await loadScript(SFX_UPLOADER_JS)
     await loadScript(SFX_ASSET_PICKER_JS)
     scriptsLoaded = true
+  }
+
+  if (options.useAuth === 'true') {
+    await resolveHubAuth()
   }
 
   const el = pickerEl.value as any

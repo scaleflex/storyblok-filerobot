@@ -6,8 +6,10 @@ import ModalToggle from './ModalToggle.vue'
 import PreviewModal from './PreviewModal.vue'
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import Filerobot from './Filerobot.vue'
+import HubLogin from './HubLogin.vue'
 import { VueDraggableNext } from 'vue-draggable-next'
 import { isPreviewMode, setPreviewMode, getSavedPreviewIndex } from './usePreviewState'
+import { hubAuth, resolveHubAuth } from './useHubAuth'
 
 interface File {
   uuid: string;
@@ -30,6 +32,8 @@ const isLoading = ref(false)
 const files = ref<File[]>([])
 const error = ref<string | null>(null)
 const isOverLimit = ref(false)
+const useAuthEnabled = ref(false)
+const rootDirValid = ref(false)
 const options = ref({
   token: '',
   secTemplate: '',
@@ -74,10 +78,26 @@ watch(plugin, (newPlugin) => {
       currentFileIndex.value = getSavedPreviewIndex()
     }
 
-    if (!isEmpty(newPlugin.data.options.token) && !isEmpty(newPlugin.data.options.secTemplate) && !isEmpty(newPlugin.data.options.rootDir)) {
+    useAuthEnabled.value = newPlugin.data.options.useAuth === 'true'
+
+    if (useAuthEnabled.value) {
+      rootDirValid.value = !isEmpty(newPlugin.data.options.rootDir)
+      options.value = {
+        token: '',
+        secTemplate: '',
+        rootDir: newPlugin.data.options.rootDir,
+        limit: Number(newPlugin.data.options.limit),
+        attributes: newPlugin.data.options.attributes,
+        limitType: newPlugin.data.options.limitType,
+        metaData: newPlugin.data.options.metaData,
+        assetPickerConfig: newPlugin.data.options.assetPickerConfig ?? '',
+        cname: newPlugin.data.options.cname ?? '',
+      }
+      if (rootDirValid.value) resolveHubAuth()
+    } else if (!isEmpty(newPlugin.data.options.token) && !isEmpty(newPlugin.data.options.secTemplate) && !isEmpty(newPlugin.data.options.rootDir)) {
       isValid.value = true
       endpoint.value = `https://api.filerobot.com/${newPlugin.data.options.token}/v5`
-      
+
       options.value = {
         token: newPlugin.data.options.token,
         secTemplate: newPlugin.data.options.secTemplate,
@@ -94,6 +114,15 @@ watch(plugin, (newPlugin) => {
     }
   }
 }, { once: true })
+
+watch(hubAuth, (auth) => {
+  if (!useAuthEnabled.value) return
+  if (auth.status === 'ready') {
+    options.value.token = auth.token
+    endpoint.value = `https://api.filerobot.com/${auth.token}/v5`
+  }
+  isValid.value = rootDirValid.value && auth.status === 'ready'
+}, { deep: true })
 
 
 const getTypeAssets = (type: any) => {
@@ -475,7 +504,13 @@ const log = () => {
       :current-file-index="currentFileIndex"
       @navigate="navigateFile"
     />
-    <div class="missConfig" v-if="!isValid">
+    <template v-if="useAuthEnabled">
+      <HubLogin v-if="hubAuth.status !== 'ready'" />
+      <div class="missConfig" v-else-if="!isValid">
+        <div>Please add the required option: <strong>rootDir</strong> from Filerobot</div>
+      </div>
+    </template>
+    <div class="missConfig" v-else-if="!isValid">
       <div>Please add 3 required options: <strong>token, secTemplate, rootDir</strong> from Filerobot <br /></div>
       <div>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"

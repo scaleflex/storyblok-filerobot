@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import { isPreviewMode, setPreviewMode } from './usePreviewState'
 import { fetchSettings, getFieldTitle } from './useSettingsStore'
+import { hubAuth, resolveHubAuth } from './useHubAuth'
 
 const escapeHtml = (str: string): string =>
   str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -96,8 +97,13 @@ const plugin = useFieldPlugin({
   enablePortalModal: true,
 })
 
-watch(plugin, (newPlugin: any) => {
-  if (newPlugin.type === 'loaded' && newPlugin.data?.options?.token) {
+watch(plugin, async (newPlugin: any) => {
+  if (newPlugin.type !== 'loaded') return
+
+  if (newPlugin.data?.options?.useAuth === 'true') {
+    await resolveHubAuth()
+    if (hubAuth.value.token) fetchSettings(hubAuth.value.token)
+  } else if (newPlugin.data?.options?.token) {
     fetchSettings(newPlugin.data.options.token)
   }
 }, { once: true })

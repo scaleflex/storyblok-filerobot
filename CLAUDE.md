@@ -52,8 +52,10 @@ src/
     ├── Filerobot.vue                # Loads & configures the Filerobot Explorer widget
     ├── ModalToggle.vue              # "Add Assets" / "Refresh Assets" buttons
     ├── PreviewModal.vue             # Full-screen asset preview (zoom, pan, nav, metadata)
+    ├── HubLogin.vue                 # "Login via Hub" button, shown when useAuth=true
     ├── usePreviewState.ts           # Cross-iframe preview state via localStorage
     ├── useSettingsStore.ts          # Fetches metadata field mappings from Filerobot API
+    ├── useHubAuth.ts                # Hub OAuth popup + session resolution (see useAuth below)
     └── index.css                    # All component styles (655 lines)
 ```
 
@@ -62,8 +64,8 @@ src/
 ## Component Responsibilities
 
 ### `index.vue` — Core orchestrator
-- Reads plugin options (`token`, `secTemplate`, `rootDir`, `limit`, `limitType`, `attributes`, `metaData`) from `plugin.data.options`
-- Validates required options (token + secTemplate + rootDir); shows config error if missing
+- Reads plugin options (`token`, `secTemplate`, `rootDir`, `limit`, `limitType`, `attributes`, `metaData`, `useAuth`) from `plugin.data.options`
+- Validates required options (token + secTemplate + rootDir, or just rootDir when `useAuth=true`); shows config error or `HubLogin` if missing
 - Calls Filerobot REST API (`https://api.filerobot.com/{token}/v5/files/{uuid}?format=select:human`) to hydrate selected file metadata
 - Assembles `File` objects and persists via `plugin.actions.setContent()`
 - Renders thumbnail grid with drag-to-reorder (`VueDraggableNext`)
@@ -97,6 +99,16 @@ src/
 - `fetchSettings(token)` — calls Filerobot Settings API to get metadata field definitions
 - `getFieldTitle(key)` — returns the human-readable label for a metadata key
 
+### `HubLogin.vue`
+- Renders when `useAuth=true` and no Hub session is resolved yet
+- "Login via Hub" button → `loginWithHub()`; shows loading/error state from `hubAuth`
+
+### `useHubAuth.ts`
+- `resolveHubAuth()` — reads `localStorage` (`sfx_hub_auth`), refreshes the session against the `plugins-oauth2` backend, updates the shared `hubAuth` ref
+- `loginWithHub()` — opens the Hub OAuth popup, registers the resulting session with the backend, persists it
+- `getAuthConfig()` — returns `{ mode: 'sassKey', sassKey, projectToken }` once a session is ready, for `Filerobot.vue`'s picker config
+- See "Hub authentication (`useAuth`)" below for the full flow
+
 ---
 
 ## Plugin Configuration Options
@@ -105,9 +117,10 @@ Configured in **Storyblok → Field Plugin → Options**:
 
 | Option | Required | Description |
 |---|---|---|
-| `token` | Yes | Filerobot container token |
-| `secTemplate` | Yes | Security template ID |
+| `token` | Yes, unless `useAuth=true` | Filerobot container token |
+| `secTemplate` | Yes, unless `useAuth=true` | Security template ID |
 | `rootDir` | Yes | Root folder path in Filerobot |
+| `useAuth` | No | Set to `true` to replace the manual `token`/`secTemplate` inputs with a "Login via Hub" button (OAuth popup against `hub.scaleflex.com`). When enabled, `token`/`secTemplate` are ignored entirely. See "Hub authentication (`useAuth`)" below. |
 | `limit` | No | Max number of assets (0 = unlimited) |
 | `limitType` | No | Comma-separated MIME categories: `image`, `video`, `audio`, `document` |
 | `attributes` | No | Comma-separated file attributes to store, e.g. `meta[field1,field2],tags,info` |
@@ -116,6 +129,21 @@ Configured in **Storyblok → Field Plugin → Options**:
 | `assetPickerConfig` | No | JSON string to override asset picker config. Defaults: `{"multiSelect":true,"showMetadata":true,"rememberLastTab":true,"rememberLastFolder":true,"rememberLastView":true}` |
 | `uploaderConfig` | No | JSON string to override the uploader config (see [uploader docs](https://scaleflex.github.io/uploader/#/docs/configuration)). Merged into `assetPickerConfig`'s `uploader` key — takes precedence if both set `uploader`. Default: `{"metadataConfig":{"enforceRequiredBeforeUpload":"auto"}}` |
 | `useUserMarketAsFilter` | No | Metadata key (matching a Hub metadata field) to force-filter assets by the story's language (`plugin.data.storyLang`), e.g. `useUserMarketAsFilter=market` → `forcedFilters.market = { values: [storyLang] }`. Merged with any existing `forcedFilters` (from `limitType`, `forceFilters`, or `assetPickerConfig`) instead of overwriting them. |
+
+---
+
+## Hub authentication (`useAuth`)
+
+Mirrors the "Login via Hub" flow in the sibling `contentstack-filerobot-plugin` app. Two mutually exclusive auth paths:
+
+- `useAuth` unset/`false` (default): manual `token` + `secTemplate` options, built into `{ mode: 'securityTemplate', securityTemplateKey, projectToken }` for the asset picker.
+- `useAuth=true`: content editors click **Login via Hub** instead. Flow:
+  1. `useHubAuth.ts` opens a popup to `https://hub.scaleflex.com/oauth2/login`; on success it receives `{sessionUuid, token, projectUuid, companyUuid, sassKey}` via `postMessage`.
+  2. That session is persisted to `localStorage` (`sfx_hub_auth`) and registered with the `plugins-oauth2` backend (`POST https://oauth2.sfxconnector.com/api/storyblok/hub-sessions`), which keeps the `sassKey` renewed server-to-server on an hourly cron (same backend/pattern as Contentstack's `contentstack` namespace, just under `storyblok`).
+  3. On every load, `resolveHubAuth()` re-fetches the current (renewed) session via `GET .../hub-sessions/{sessionUuid}` and feeds it to the asset picker as `{ mode: 'sassKey', sassKey, projectToken: token }`.
+  4. The resolved `token` also backfills `options.token`/`endpoint`, so every existing token-based call (`fetchfileData`, `useSettingsStore.fetchSettings`) keeps working unmodified.
+- Because `@storyblok/field-plugin`'s `enablePortalModal: true` renders the modal content in a **separate iframe** (a fresh instance of the whole plugin, same as the cross-iframe note on `usePreviewState.ts`), `index.vue`, `Filerobot.vue`, and `PreviewModal.vue` each independently call `resolveHubAuth()` on load rather than relying on a shared in-memory state — `localStorage` is the only channel between the two iframes.
+- Backend changes live in the separate `plugins-oauth2` repo (Laravel): a single `hub_sessions` table/`HubSession` model shared across platforms via a `provider` column (`'contentstack' | 'storyblok'`), one `HubSessionController` (provider resolved from a route default, not a separate controller per platform), one `RenewHubSessionJob`, and provider-agnostic `sfx:renew-hub-sessions`/`sfx:prune-stale-hub-sessions` commands — reusing the shared `App\Services\ScaleflexSessionRenewer`. The pre-existing Contentstack table/model were renamed into this unified shape (migration `2026_10_07_120000_unify_hub_sessions_table.php` does `Schema::rename('contentstack_hub_sessions', 'hub_sessions')` + adds `provider`); both `contentstack` and `storyblok` keep their own URL prefix and CORS origin env var (`CONTENTSTACK_APP_ORIGIN`/`STORYBLOK_APP_ORIGIN`), so neither frontend's API contract changed.
 
 ---
 
