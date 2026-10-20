@@ -3,8 +3,9 @@ import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import { watch, onMounted, ref } from 'vue'
 import { isPreviewMode } from './usePreviewState'
 
-const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.20.3/sfx-uploader.min.js'
-const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.15.2/asset-picker.min.js'
+const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.21.0/sfx-uploader.min.js'
+const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.18.0/asset-picker.min.js'
+const SFX_IMAGE_CROP_JS = 'https://cdn.cloudimage.io/image-crop/3.1.0/image-crop.min.js';
 
 interface SelectedFiles {
   (files: any[]): void
@@ -132,16 +133,24 @@ const buildConfig = (options: any, storyLang?: string) => {
 }
 
 const initPicker = async (options: any, storyLang?: string) => {
+  const config = buildConfig(options, storyLang)
+
   if (!scriptsLoaded) {
     await loadScript(SFX_UPLOADER_JS)
     await loadScript(SFX_ASSET_PICKER_JS)
     scriptsLoaded = true
   }
 
+  // Image crop library is only needed when the user enables "crop" in assetPickerConfig
+  if (config.crop === true) {
+    config.transformations = true
+    await loadScript(SFX_IMAGE_CROP_JS)
+  }
+
   const el = pickerEl.value as any
   if (!el) return
 
-  el.config = buildConfig(options, storyLang)
+  el.config = config
 
   if (!listenerAttached) {
     el.addEventListener('ap-select', (e: CustomEvent) => {
