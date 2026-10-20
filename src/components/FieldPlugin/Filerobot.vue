@@ -4,7 +4,7 @@ import { watch, onMounted, ref } from 'vue'
 import { isPreviewMode } from './usePreviewState'
 
 const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.21.0/sfx-uploader.min.js'
-const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.18.0/asset-picker.min.js'
+const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.18.1/asset-picker.min.js'
 const SFX_IMAGE_CROP_JS = 'https://cdn.cloudimage.io/image-crop/3.1.0/image-crop.min.js';
 
 interface SelectedFiles {
