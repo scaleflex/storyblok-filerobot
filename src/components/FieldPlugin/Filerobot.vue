@@ -94,10 +94,15 @@ const buildConfig = (options: any, storyLang?: string) => {
     ...extraConfig,
   }
 
-  // uploaderConfig is dedicated to the uploader, so it wins over anything set via assetPickerConfig
-  pickerConfig.uploader = {
-    ...pickerConfig.uploader,
-    ...extraUploaderConfig,
+  // "uploader": null (in assetPickerConfig or uploaderConfig) removes the uploader entirely
+  if (pickerConfig.uploader === null || extraUploaderConfig === null) {
+    delete pickerConfig.uploader
+  } else {
+    // uploaderConfig is dedicated to the uploader, so it wins over anything set via assetPickerConfig
+    pickerConfig.uploader = {
+      ...pickerConfig.uploader,
+      ...extraUploaderConfig,
+    }
   }
 
   // Seed from any forcedFilters already set via assetPickerConfig so it isn't clobbered below
