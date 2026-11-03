@@ -190,6 +190,18 @@ hr {
   color: #4d4e4e;
 }
 
+.hub-login {
+  text-align: center;
+}
+
+.hub-login .btn {
+  margin: 16px auto 0;
+}
+
+.hub-login-error {
+  color: red;
+}
+
 .remove-all {
   text-align: right;
 }
