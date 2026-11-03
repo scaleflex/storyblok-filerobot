@@ -9,7 +9,7 @@ const handleLoginClick = () => {
 <template>
   <div class="missConfig hub-login">
     <div>
-      Sign in with your Filerobot Hub account to connect this field — no token or security template needed.
+      Sign in with your Scaleflex DAM account to connect this field — no token or security template needed.
     </div>
     <div v-if="hubAuth.status === 'error'" class="hub-login-error">
       {{ hubAuth.error }}

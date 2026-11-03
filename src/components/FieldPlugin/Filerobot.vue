@@ -2,10 +2,10 @@
 import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import { watch, onMounted, ref } from 'vue'
 import { isPreviewMode } from './usePreviewState'
-import { resolveHubAuth, getAuthConfig } from './useHubAuth'
+import { ensureValidHubAuth, getAuthConfig } from './useHubAuth'
 
 const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.22.0/sfx-uploader.min.js'
-const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.19.0/asset-picker.min.js'
+const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.20.0/asset-picker.min.js'
 const SFX_IMAGE_CROP_JS = 'https://cdn.cloudimage.io/image-crop/3.1.0/image-crop.min.js';
 
 interface SelectedFiles {
@@ -139,9 +139,9 @@ const buildConfig = (options: any, storyLang?: string) => {
 }
 
 const initPicker = async (options: any, storyLang?: string) => {
-  // Hub session must be resolved before buildConfig, which reads it via getAuthConfig()
+  // Hub session must be validated before buildConfig, which reads it via getAuthConfig()
   if (options.useAuth === 'true') {
-    await resolveHubAuth()
+    await ensureValidHubAuth()
   }
 
   const config = buildConfig(options, storyLang)
@@ -187,11 +187,18 @@ const initPicker = async (options: any, storyLang?: string) => {
   }
 }
 
-watch(() => plugin.data, (data) => {
-  if (data?.isModalOpen && !isPreviewMode.value) {
-    initPicker(data.options, data.storyLang)
-  }
-})
+// Watch only the "picker should be visible" condition, not the whole plugin.data object:
+// plugin.data is replaced on every state message (height, content…), and re-running
+// initPicker each time refetches the Hub session and resets the picker in a loop.
+watch(
+  () => plugin.type === 'loaded' && !!plugin.data?.isModalOpen && !isPreviewMode.value,
+  (shouldShow) => {
+    if (shouldShow && plugin.type === 'loaded') {
+      initPicker(plugin.data.options, plugin.data.storyLang)
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>

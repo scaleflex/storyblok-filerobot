@@ -55,17 +55,19 @@ const registerHubSession = async (data: HubAuthData): Promise<void> => {
 }
 
 // fetches the current (backend-renewed) session/SASS key for a known session_uuid;
-// null if the backend no longer has this session (never registered, or pruned after
-// repeated renewal failures) — the caller should treat that as "log in again"
-const fetchCurrentHubSession = async (sessionUuid: string): Promise<HubAuthData | null> => {
+// 'gone' only on 404 (never registered, or pruned after repeated renewal failures) —
+// the caller should treat that as "log in again". Any other failure (network, 429, 5xx)
+// is 'error' and must not log the user out.
+const fetchCurrentHubSession = async (sessionUuid: string): Promise<HubAuthData | 'gone' | 'error'> => {
   try {
     const response = await fetch(`${HUB_SESSION_API_BASE}/hub-sessions/${sessionUuid}`, {
       headers: { accept: 'application/json' },
     })
-    if (!response.ok) return null
+    if (response.status === 404) return 'gone'
+    if (!response.ok) return 'error'
     return await response.json()
   } catch {
-    return null
+    return 'error'
   }
 }
 
@@ -113,36 +115,74 @@ const openHubLoginPopup = (): Promise<HubAuthData> =>
     window.addEventListener('message', handleAuth)
   })
 
-let resolvePromise: Promise<void> | null = null
+// true unless Filerobot rejects the key with 401; a network error is not proof the key
+// is dead, so it counts as usable
+const isSassKeyUsable = async (data: HubAuthData): Promise<boolean> => {
+  try {
+    const response = await fetch(`https://api.filerobot.com/${data.token}/v5/labels`, {
+      headers: { 'X-Filerobot-Key': data.sassKey },
+    })
+    return response.status !== 401
+  } catch {
+    return true
+  }
+}
 
-// Checks localStorage for a stored Hub session and refreshes it against the backend.
-// Falls back to status 'idle' (caller shows the login button) if there's no session
-// or the backend no longer recognizes it.
-export const resolveHubAuth = (): Promise<void> => {
-  if (resolvePromise) return resolvePromise
+const setReady = (data: HubAuthData) => {
+  hubAuth.value = { status: 'ready', token: data.token, sassKey: data.sassKey, error: '' }
+}
 
-  resolvePromise = (async () => {
+const setLoggedOut = () => {
+  clearHubAuth()
+  hubAuth.value = { status: 'idle', token: '', sassKey: '', error: '' }
+}
+
+// Loads the Hub session from localStorage only — no network call. Status 'idle'
+// (caller shows the login button) if nothing is stored.
+export const resolveHubAuth = async (): Promise<void> => {
+  const stored = getStoredHubAuth()
+  if (stored) setReady(stored)
+  else hubAuth.value = { status: 'idle', token: '', sassKey: '', error: '' }
+}
+
+// Called once per app load (main iframe only): pulls the latest sassKey from the backend
+// and stores it in localStorage for every later use. Keeps the stored session on a
+// transient backend failure; logs out only if the backend no longer has the session.
+export const refreshHubAuth = async (): Promise<void> => {
+  const stored = getStoredHubAuth()
+  if (!stored) return setLoggedOut()
+
+  const current = await fetchCurrentHubSession(stored.sessionUuid)
+  if (current === 'gone') return setLoggedOut()
+  if (current === 'error') return setReady(stored)
+  saveHubAuth(current)
+  setReady(current)
+}
+
+let ensurePromise: Promise<void> | null = null
+
+// Called right before opening the asset picker: keeps using the local sassKey while it
+// works. Only on a 401 from Filerobot, fetches the latest key from the backend;
+// if the backend can't provide one, logs out so the user signs in again.
+export const ensureValidHubAuth = (): Promise<void> => {
+  if (ensurePromise) return ensurePromise
+
+  ensurePromise = (async () => {
     const stored = getStoredHubAuth()
-    if (!stored) {
-      hubAuth.value = { status: 'idle', token: '', sassKey: '', error: '' }
-      return
-    }
+    if (!stored) return setLoggedOut()
+    if (await isSassKeyUsable(stored)) return setReady(stored)
 
-    hubAuth.value = { ...hubAuth.value, status: 'loading' }
     const current = await fetchCurrentHubSession(stored.sessionUuid)
-    if (current) {
-      saveHubAuth(current)
-      hubAuth.value = { status: 'ready', token: current.token, sassKey: current.sassKey, error: '' }
-      return
+    if (current === 'gone' || current === 'error' || !(await isSassKeyUsable(current))) {
+      return setLoggedOut()
     }
-
-    clearHubAuth()
-    hubAuth.value = { status: 'idle', token: '', sassKey: '', error: '' }
+    saveHubAuth(current)
+    setReady(current)
   })().finally(() => {
-    resolvePromise = null
+    ensurePromise = null
   })
 
-  return resolvePromise
+  return ensurePromise
 }
 
 export const loginWithHub = async (): Promise<void> => {

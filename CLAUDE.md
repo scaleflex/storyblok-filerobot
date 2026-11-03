@@ -104,7 +104,9 @@ src/
 - "Login via Hub" button → `loginWithHub()`; shows loading/error state from `hubAuth`
 
 ### `useHubAuth.ts`
-- `resolveHubAuth()` — reads `localStorage` (`sfx_hub_auth`), refreshes the session against the `plugins-oauth2` backend, updates the shared `hubAuth` ref
+- `resolveHubAuth()` — reads `localStorage` (`sfx_hub_auth`) only, updates the shared `hubAuth` ref
+- `refreshHubAuth()` — once per app load: fetches the latest session from the `plugins-oauth2` backend and stores it
+- `ensureValidHubAuth()` — before opening the picker: probes the stored `sassKey`, re-fetches from the backend only on 401
 - `loginWithHub()` — opens the Hub OAuth popup, registers the resulting session with the backend, persists it
 - `getAuthConfig()` — returns `{ mode: 'sassKey', sassKey, projectToken }` once a session is ready, for `Filerobot.vue`'s picker config
 - See "Hub authentication (`useAuth`)" below for the full flow
@@ -140,9 +142,9 @@ Mirrors the "Login via Hub" flow in the sibling `contentstack-filerobot-plugin` 
 - `useAuth=true`: content editors click **Login via Hub** instead. Flow:
   1. `useHubAuth.ts` opens a popup to `https://hub.scaleflex.com/oauth2/login`; on success it receives `{sessionUuid, token, projectUuid, companyUuid, sassKey}` via `postMessage`.
   2. That session is persisted to `localStorage` (`sfx_hub_auth`) and registered with the `plugins-oauth2` backend (`POST https://oauth2.sfxconnector.com/api/storyblok/hub-sessions`), which keeps the `sassKey` renewed server-to-server on an hourly cron (same backend/pattern as Contentstack's `contentstack` namespace, just under `storyblok`).
-  3. On every load, `resolveHubAuth()` re-fetches the current (renewed) session via `GET .../hub-sessions/{sessionUuid}` and feeds it to the asset picker as `{ mode: 'sassKey', sassKey, projectToken: token }`.
+  3. Once per app load (main iframe only), `refreshHubAuth()` fetches the latest session via `GET .../hub-sessions/{sessionUuid}` and stores it in `localStorage`. Everything else reuses that stored `sassKey` without hitting the backend: the portal-modal iframe and `PreviewModal.vue` use `resolveHubAuth()` (localStorage only). Right before opening the picker, `ensureValidHubAuth()` in `Filerobot.vue` probes the key with `GET api.filerobot.com/{token}/v5/labels`; only on a **401** does it re-fetch from the backend (the backend renews the *session*, so a `sassKey` can expire in under an hour), and it logs out if the backend no longer has a usable key. The key reaches the picker as `{ mode: 'sassKey', sassKey, projectToken: token }`.
   4. The resolved `token` also backfills `options.token`/`endpoint`, so every existing token-based call (`fetchfileData`, `useSettingsStore.fetchSettings`) keeps working unmodified.
-- Because `@storyblok/field-plugin`'s `enablePortalModal: true` renders the modal content in a **separate iframe** (a fresh instance of the whole plugin, same as the cross-iframe note on `usePreviewState.ts`), `index.vue`, `Filerobot.vue`, and `PreviewModal.vue` each independently call `resolveHubAuth()` on load rather than relying on a shared in-memory state — `localStorage` is the only channel between the two iframes.
+- Because `@storyblok/field-plugin`'s `enablePortalModal: true` renders the modal content in a **separate iframe** (a fresh instance of the whole plugin, same as the cross-iframe note on `usePreviewState.ts`), `index.vue`, `Filerobot.vue`, and `PreviewModal.vue` each independently load the session (via the functions above) rather than relying on a shared in-memory state — `localStorage` is the only channel between the two iframes.
 - Backend changes live in the separate `plugins-oauth2` repo (Laravel): a single `hub_sessions` table/`HubSession` model shared across platforms via a `provider` column (`'contentstack' | 'storyblok'`), one `HubSessionController` (provider resolved from a route default, not a separate controller per platform), one `RenewHubSessionJob`, and provider-agnostic `sfx:renew-hub-sessions`/`sfx:prune-stale-hub-sessions` commands — reusing the shared `App\Services\ScaleflexSessionRenewer`. The pre-existing Contentstack table/model were renamed into this unified shape (migration `2026_10_07_120000_unify_hub_sessions_table.php` does `Schema::rename('contentstack_hub_sessions', 'hub_sessions')` + adds `provider`); both `contentstack` and `storyblok` keep their own URL prefix and CORS origin env var (`CONTENTSTACK_APP_ORIGIN`/`STORYBLOK_APP_ORIGIN`), so neither frontend's API contract changed.
 
 ---

@@ -194,6 +194,10 @@ hr {
   text-align: center;
 }
 
+.hub-login .btn {
+  margin: 16px auto 0;
+}
+
 .hub-login-error {
   color: red;
 }

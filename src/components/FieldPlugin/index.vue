@@ -9,7 +9,7 @@ import Filerobot from './Filerobot.vue'
 import HubLogin from './HubLogin.vue'
 import { VueDraggableNext } from 'vue-draggable-next'
 import { isPreviewMode, setPreviewMode, getSavedPreviewIndex } from './usePreviewState'
-import { hubAuth, resolveHubAuth } from './useHubAuth'
+import { hubAuth, resolveHubAuth, refreshHubAuth } from './useHubAuth'
 
 interface File {
   uuid: string;
@@ -93,7 +93,12 @@ watch(plugin, (newPlugin) => {
         assetPickerConfig: newPlugin.data.options.assetPickerConfig ?? '',
         cname: newPlugin.data.options.cname ?? '',
       }
-      if (rootDirValid.value) resolveHubAuth()
+      // Main iframe: fetch the latest sassKey once per app load. The portal-modal iframe
+      // (isModalOpen) is a fresh load too, but reuses what the main iframe stored.
+      if (rootDirValid.value) {
+        if (newPlugin.data.isModalOpen) resolveHubAuth()
+        else refreshHubAuth()
+      }
     } else if (!isEmpty(newPlugin.data.options.token) && !isEmpty(newPlugin.data.options.secTemplate) && !isEmpty(newPlugin.data.options.rootDir)) {
       isValid.value = true
       endpoint.value = `https://api.filerobot.com/${newPlugin.data.options.token}/v5`
@@ -505,13 +510,20 @@ const log = () => {
       @navigate="navigateFile"
     />
     <template v-if="useAuthEnabled">
-      <HubLogin v-if="hubAuth.status !== 'ready'" />
-      <div class="missConfig" v-else-if="!isValid">
-        <div>Please add the required option: <strong>rootDir</strong> from Filerobot</div>
+      <div class="missConfig" v-if="!rootDirValid">
+        <div>Please add the required option: <strong>rootDir</strong> from Scaleflex DAM</div>
       </div>
     </template>
     <div class="missConfig" v-else-if="!isValid">
-      <div>Please add 3 required options: <strong>token, secTemplate, rootDir</strong> from Filerobot <br /></div>
+      <div>Please add 3 required options: <strong>token, secTemplate, rootDir</strong> from Scaleflex DAM <br /></div>
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+             class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+        </svg>
+        <strong>useAuth</strong> is optional. Set to <strong>true</strong> to sign in with a "Login via Hub" button instead of using
+        <strong>token</strong> and <strong>secTemplate</strong> (only <strong>rootDir</strong> is then required)
+      </div>
       <div>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
              class="size-6">
@@ -550,7 +562,8 @@ const log = () => {
         Read the documentation at <a href="https://scaleflex.github.io/asset-picker/#/docs/configuration" target="_blank">here</a>
       </div>
     </div>
-    <div v-if="isValid">
+    <!-- With useAuth, already-stored assets stay visible before login; only adding/refreshing needs a Hub session -->
+    <div v-if="isValid || (useAuthEnabled && rootDirValid)">
       <div class="remove-all" v-if="!plugin.data.isModalOpen && files.length > 0">
         <span @click="() => removeAllAssets()">
           Remove all assets
@@ -696,17 +709,20 @@ const log = () => {
         </div>
       </div>
 
-      <Filerobot
-        :selected-files="selectedFiles"
-      />
+      <template v-if="isValid">
+        <Filerobot
+          :selected-files="selectedFiles"
+        />
 
-      <ModalToggle
-        :is-modal-open="plugin.data.isModalOpen"
-        :set-modal-open="plugin.actions.setModalOpen"
-        :refresh-assets="refreshAssets"
-        :isLoading="isLoading"
-        :totalAssets="getTotalAssets()"
-      />
+        <ModalToggle
+          :is-modal-open="plugin.data.isModalOpen"
+          :set-modal-open="plugin.actions.setModalOpen"
+          :refresh-assets="refreshAssets"
+          :isLoading="isLoading"
+          :totalAssets="getTotalAssets()"
+        />
+      </template>
+      <HubLogin v-else-if="!plugin.data.isModalOpen" />
     </div>
   </div>
 </template>
