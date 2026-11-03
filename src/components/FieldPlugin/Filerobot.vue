@@ -4,8 +4,9 @@ import { watch, onMounted, ref } from 'vue'
 import { isPreviewMode } from './usePreviewState'
 import { resolveHubAuth, getAuthConfig } from './useHubAuth'
 
-const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.20.0/sfx-uploader.min.js'
-const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.14.0/asset-picker.min.js'
+const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.22.0/sfx-uploader.min.js'
+const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.19.0/asset-picker.min.js'
+const SFX_IMAGE_CROP_JS = 'https://cdn.cloudimage.io/image-crop/3.1.0/image-crop.min.js';
 
 interface SelectedFiles {
   (files: any[]): void
@@ -94,10 +95,15 @@ const buildConfig = (options: any, storyLang?: string) => {
     ...extraConfig,
   }
 
-  // uploaderConfig is dedicated to the uploader, so it wins over anything set via assetPickerConfig
-  pickerConfig.uploader = {
-    ...pickerConfig.uploader,
-    ...extraUploaderConfig,
+  // "uploader": null (in assetPickerConfig or uploaderConfig) removes the uploader entirely
+  if (pickerConfig.uploader === null || extraUploaderConfig === null) {
+    delete pickerConfig.uploader
+  } else {
+    // uploaderConfig is dedicated to the uploader, so it wins over anything set via assetPickerConfig
+    pickerConfig.uploader = {
+      ...pickerConfig.uploader,
+      ...extraUploaderConfig,
+    }
   }
 
   // Seed from any forcedFilters already set via assetPickerConfig so it isn't clobbered below
@@ -133,23 +139,33 @@ const buildConfig = (options: any, storyLang?: string) => {
 }
 
 const initPicker = async (options: any, storyLang?: string) => {
+  // Hub session must be resolved before buildConfig, which reads it via getAuthConfig()
+  if (options.useAuth === 'true') {
+    await resolveHubAuth()
+  }
+
+  const config = buildConfig(options, storyLang)
+
   if (!scriptsLoaded) {
     await loadScript(SFX_UPLOADER_JS)
     await loadScript(SFX_ASSET_PICKER_JS)
     scriptsLoaded = true
   }
 
-  if (options.useAuth === 'true') {
-    await resolveHubAuth()
+  // Image crop library is only needed when the user enables "crop" in assetPickerConfig
+  if (config.crop === true) {
+    config.transformations = true
+    await loadScript(SFX_IMAGE_CROP_JS)
   }
 
   const el = pickerEl.value as any
   if (!el) return
 
-  el.config = buildConfig(options, storyLang)
+  el.config = config
 
   if (!listenerAttached) {
     el.addEventListener('ap-select', (e: CustomEvent) => {
+      // console.log('[storyblok-filerobot] storyId:', plugin.data?.storyId)
       const assets = (e.detail?.assets ?? []).map((asset: any) => {
         const variantUrl = asset.selectedVariant?.url
         const variantCdn = typeof variantUrl === 'string' ? variantUrl : variantUrl?.cdn
