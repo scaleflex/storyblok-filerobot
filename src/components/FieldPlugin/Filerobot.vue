@@ -3,8 +3,8 @@ import { useFieldPlugin } from '@storyblok/field-plugin/vue3'
 import { watch, onMounted, ref } from 'vue'
 import { isPreviewMode } from './usePreviewState'
 
-const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.21.0/sfx-uploader.min.js'
-const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.18.1/asset-picker.min.js'
+const SFX_UPLOADER_JS = 'https://cdn.scaleflex.com/uploader/1.22.0/sfx-uploader.min.js'
+const SFX_ASSET_PICKER_JS = 'https://cdn.scaleflex.com/asset-picker/1.19.0/asset-picker.min.js'
 const SFX_IMAGE_CROP_JS = 'https://cdn.cloudimage.io/image-crop/3.1.0/image-crop.min.js';
 
 interface SelectedFiles {
@@ -159,6 +159,7 @@ const initPicker = async (options: any, storyLang?: string) => {
 
   if (!listenerAttached) {
     el.addEventListener('ap-select', (e: CustomEvent) => {
+      // console.log('[storyblok-filerobot] storyId:', plugin.data?.storyId)
       const assets = (e.detail?.assets ?? []).map((asset: any) => {
         const variantUrl = asset.selectedVariant?.url
         const variantCdn = typeof variantUrl === 'string' ? variantUrl : variantUrl?.cdn
